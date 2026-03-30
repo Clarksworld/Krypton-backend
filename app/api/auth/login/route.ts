@@ -37,8 +37,9 @@ export async function POST(req: NextRequest) {
       email: user.email,
     });
 
-    // Set cookie and return user info
+    // Set cookie and return user info + token
     const response = ok({
+      token,
       user: {
         id: user.id,
         email: user.email,

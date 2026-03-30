@@ -8,7 +8,7 @@ import { signToken } from "@/lib/auth";
 import { or, eq } from "drizzle-orm";
 import { sendVerificationEmail } from "@/lib/mail";
 import { z } from "zod";
-import { randomUUID } from "crypto";
+import { randomInt } from "crypto";
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
 
     // Hash password
     const passwordHash = await hash(password, 12);
-    const emailVerifyToken = randomUUID();
+    const emailVerifyToken = randomInt(100000, 999999).toString();
 
     // Create user in a transaction
     const newUser = await db.transaction(async (tx) => {

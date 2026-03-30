@@ -8,26 +8,28 @@ import { eq, and, gt } from "drizzle-orm";
 import { z } from "zod";
 
 const resetPasswordSchema = z.object({
-  token: z.string(),
+  email: z.string().email(),
+  token: z.string().length(6, "OTP must be 6 digits"),
   newPassword: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { token, newPassword } = validate(resetPasswordSchema, body);
+    const { email, token, newPassword } = validate(resetPasswordSchema, body);
 
-    // Find user with valid token and not expired
+    // Find user with valid email, token, and not expired
     const user = await db.query.users.findFirst({
       where: (u, { eq, gt, and }) => 
         and(
+          eq(u.email, email),
           eq(u.passwordResetToken, token),
           gt(u.passwordResetExpires, new Date())
         ),
     });
 
     if (!user) {
-      throw new ApiError("Invalid or expired reset token", 400);
+      throw new ApiError("Invalid email, OTP, or expired session", 400);
     }
 
     // Update password and clear reset token

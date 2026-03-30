@@ -12,6 +12,10 @@ const forgotPasswordSchema = z.object({
   email: z.string().email(),
 });
 
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -24,7 +28,7 @@ export async function POST(req: NextRequest) {
 
     // We return successful response even if user doesn't exist for security reasons (prevent email enumeration)
     if (user) {
-      const resetToken = randomUUID();
+      const resetToken = generateOTP();
       const expiresAt = new Date(Date.now() + 3600000); // 1 hour
 
       await db

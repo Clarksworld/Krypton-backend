@@ -31,6 +31,11 @@ export async function POST(req: NextRequest) {
       throw new ApiError("Invalid email or password", 401);
     }
 
+    // Enforce email verification
+    if (!user.isEmailVerified) {
+      throw new ApiError("Please verify your email to log in", 401);
+    }
+
     // Generate JWT
     const token = await signToken({
       sub: user.id,

@@ -13,6 +13,7 @@
     "drizzle-orm": "^0.45.1",
     "jose": "^6.2.2",
     "next": "16.2.1",
+    "nodemailer": "^8.0.4",
     "postgres": "^3.4.8",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -22,6 +23,7 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
+    "@types/nodemailer": "^7.0.11",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "drizzle-kit": "^0.31.10",

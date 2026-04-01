@@ -57,26 +57,29 @@ export async function GET(req: NextRequest) {
       assetIdFilter = asset.id;
     }
 
-    // ── Build the where clause dynamically ────────────────────────────
-    // Drizzle doesn't have a great way to build dynamic where clauses, so
-    // we use the query builder's where with conditional ANDs.
-    const buildWhere = (t: typeof transactions, { eq, and }: any) => {
-      const conditions = [eq(t.userId, userId)];
-      if (typeFilter) conditions.push(eq(t.type, typeFilter));
-      if (statusFilter) conditions.push(eq(t.status, statusFilter));
-      if (assetIdFilter) conditions.push(eq(t.assetId, assetIdFilter));
-      return conditions.length === 1 ? conditions[0] : and(...conditions);
-    };
+    // ── Build conditions array ────────────────────────────────────────
+    const conditions = [eq(transactions.userId, userId)];
+    if (typeFilter) conditions.push(eq(transactions.type, typeFilter));
+    if (statusFilter) conditions.push(eq(transactions.status, statusFilter));
+    if (assetIdFilter) conditions.push(eq(transactions.assetId, assetIdFilter));
+    const whereClause = and(...conditions);
 
     // ── Fetch total count ──────────────────────────────────────────────
     const [{ total }] = await db
       .select({ total: count() })
       .from(transactions)
-      .where(buildWhere(transactions, { eq, and }));
+      .where(whereClause);
 
     // ── Fetch paginated transactions ───────────────────────────────────
+    // We use the raw select here instead of findMany to ensure type stability
     const rows = await db.query.transactions.findMany({
-      where: (t, helpers) => buildWhere(t, helpers),
+      where: (t, { eq, and }) => {
+        const queryConditions = [eq(t.userId, userId)];
+        if (typeFilter) queryConditions.push(eq(t.type, typeFilter as any));
+        if (statusFilter) queryConditions.push(eq(t.status, statusFilter as any));
+        if (assetIdFilter) queryConditions.push(eq(t.assetId, assetIdFilter));
+        return and(...queryConditions);
+      },
       with: {
         asset: {
           columns: {

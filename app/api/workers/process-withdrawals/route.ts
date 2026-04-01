@@ -59,7 +59,12 @@ export async function POST(req: NextRequest) {
         const toAddress = metadata.to;
         const amount = tx.amount;
         
-        const networks = tx.asset?.networks as any[];
+        // Safety check for asset
+        if (!tx.asset) {
+          throw new Error("Asset configuration missing for transaction");
+        }
+
+        const networks = tx.asset.networks as any[];
         const bscNetwork = networks?.find(n => n.name === "BEP20" || n.name === "ERC20");
         
         let contractAddress: string | null = null;

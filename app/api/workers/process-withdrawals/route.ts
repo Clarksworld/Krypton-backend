@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       with: {
         asset: true,
       },
-      limit: 5,
+      limit: 2,
     });
 
     if (pendingWithdrawals.length === 0) {

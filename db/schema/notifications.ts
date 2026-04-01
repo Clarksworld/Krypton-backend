@@ -21,6 +21,7 @@ export const notifications = pgTable("notifications", {
   isRead: boolean("is_read").default(false),
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
@@ -41,6 +42,7 @@ export const notificationSettings = pgTable("notification_settings", {
   promoAlerts: boolean("promo_alerts").default(false),
   pushEnabled: boolean("push_enabled").default(true),
   emailEnabled: boolean("email_enabled").default(true),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
 export const notificationSettingsRelations = relations(notificationSettings, ({ one }) => ({

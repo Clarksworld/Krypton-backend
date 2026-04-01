@@ -13,7 +13,28 @@ async function main() {
         iconUrl: "https://cryptologos.cc/logos/tether-usdt-logo.png",
         networks: [
           { name: "TRC20", addressRegex: "^T[1-9A-HJ-NP-Za-km-z]{33}$" },
-          { name: "ERC20", addressRegex: "^0x[a-fA-F0-9]{40}$" },
+          { 
+            name: "ERC20", 
+            addressRegex: "^0x[a-fA-F0-9]{40}$",
+            contractAddress: process.env.USDT_ERC20_TESTNET_ADDRESS,
+          },
+          { 
+            name: "BEP20", 
+            addressRegex: "^0x[a-fA-F0-9]{40}$",
+            contractAddress: process.env.USDT_BEP20_TESTNET_ADDRESS,
+          },
+        ],
+      },
+      {
+        symbol: "BNB",
+        name: "Binance Coin",
+        iconUrl: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+        networks: [
+          { 
+            name: "BEP20", 
+            addressRegex: "^0x[a-fA-F0-9]{40}$",
+            isNative: true,
+          },
         ],
       },
       {

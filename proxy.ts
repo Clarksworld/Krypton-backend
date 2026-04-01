@@ -5,8 +5,21 @@ import { verifyToken } from "./lib/auth";
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Only protect /api routes, but exclude auth endpoints
-  if (pathname.startsWith("/api") && !pathname.startsWith("/api/auth")) {
+  const publicAuthRoutes = [
+    "/api/auth/login",
+    "/api/auth/register",
+    "/api/auth/password/forgot",
+    "/api/auth/password/reset",
+    "/api/auth/verify-email",
+    "/api/auth/resend-verification",
+    "/api/workers",
+    "/api/webhooks",
+  ];
+
+  const isPublicRoute = publicAuthRoutes.some((route) => pathname.startsWith(route));
+
+  // Only protect /api routes, but exclude strictly public endpoints
+  if (pathname.startsWith("/api") && !isPublicRoute) {
     const token = request.cookies.get("krypton_token")?.value;
 
     if (!token) {

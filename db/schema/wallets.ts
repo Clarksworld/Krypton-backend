@@ -18,6 +18,8 @@ export const cryptoAssets = pgTable("crypto_assets", {
   iconUrl: text("icon_url"),
   isActive: boolean("is_active").default(true),
   networks: jsonb("networks"), // [{name:"TRC20", addressRegex:"..."}]
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
 export const cryptoAssetsRelations = relations(cryptoAssets, ({ many }) => ({
@@ -38,6 +40,7 @@ export const wallets = pgTable(
     frozenBalance: numeric("frozen_balance", { precision: 28, scale: 8 }).default("0"),
     depositAddress: text("deposit_address"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
   },
   (t) => [unique("wallets_user_asset_unique").on(t.userId, t.assetId)]
 );

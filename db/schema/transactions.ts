@@ -15,7 +15,7 @@ export const transactions = pgTable("transactions", {
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  // deposit | withdrawal | sell | p2p_buy | p2p_sell | fee
+  // deposit | withdrawal | internal_transfer | sell | p2p_buy | p2p_sell | fee
   type: text("type").notNull(),
   assetId: uuid("asset_id").references(() => cryptoAssets.id),
   amount: numeric("amount", { precision: 28, scale: 8 }).notNull(),

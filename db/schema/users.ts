@@ -4,6 +4,7 @@ import {
   text,
   boolean,
   timestamp,
+  serial,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { wallets } from "./wallets";
@@ -21,6 +22,10 @@ export const users = pgTable("users", {
   emailVerifyToken: text("email_verify_token"),
   passwordResetToken: text("password_reset_token"),
   passwordResetExpires: timestamp("password_reset_expires", { withTimezone: true }),
+  twoFactorSecret: text("two_factor_secret"),
+  isTwoFactorEnabled: boolean("is_two_factor_enabled").default(false),
+  last2faVerifiedAt: timestamp("last_2fa_verified_at", { withTimezone: true }),
+  userIndex: serial("user_index").notNull().unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });

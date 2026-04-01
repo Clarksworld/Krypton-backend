@@ -2,10 +2,19 @@ import { NextRequest } from "next/server";
 import { db } from "@/db";
 import { getUserId } from "@/lib/auth";
 import { ok, handleError } from "@/lib/errors";
+import { checkOnChainDeposits } from "@/lib/blockchain/monitor";
 
 export async function GET(req: NextRequest) {
   try {
     const userId = getUserId(req);
+
+    // Auto-sync deposits from blockchain on every balance fetch
+    try {
+      await checkOnChainDeposits(userId);
+    } catch (syncErr) {
+      console.error("Wallet sync failed:", syncErr);
+      // We continue anyway to show existing balances
+    }
 
     // Fetch user with wallets AND assets (thanks to relations)
     const userWallets = await db.query.wallets.findMany({

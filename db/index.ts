@@ -1,3 +1,5 @@
+import { z } from "zod";
+import { env } from "@/lib/config";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";

@@ -13,5 +13,6 @@ export const kycSubmissions = pgTable("kyc_submissions", {
   status: text("status").default("pending"), // pending | approved | failed
   rejectReason: text("reject_reason"),
   submittedAt: timestamp("submitted_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
 });

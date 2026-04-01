@@ -18,6 +18,7 @@ export const bankAccounts = pgTable("bank_accounts", {
   accountNumber: text("account_number").notNull(),
   isDefault: boolean("is_default").default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
 export const bankAccountsRelations = relations(bankAccounts, ({ one }) => ({

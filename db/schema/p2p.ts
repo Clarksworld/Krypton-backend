@@ -32,6 +32,7 @@ export const p2pOffers = pgTable("p2p_offers", {
   totalOrders: integer("total_orders").default(0),
   completionRate: numeric("completion_rate", { precision: 5, scale: 2 }).default("100"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
 export const p2pOffersRelations = relations(p2pOffers, ({ one, many }) => ({
@@ -71,6 +72,7 @@ export const p2pTrades = pgTable("p2p_trades", {
   completedAt: timestamp("completed_at", { withTimezone: true }),
   expiresAt: timestamp("expires_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
 export const p2pTradesRelations = relations(p2pTrades, ({ one, many }) => ({
@@ -106,6 +108,7 @@ export const p2pDisputes = pgTable("p2p_disputes", {
   status: text("status").default("open"), // open | resolved
   resolution: text("resolution"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
   resolvedAt: timestamp("resolved_at", { withTimezone: true }),
 });
 

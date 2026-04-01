@@ -10,10 +10,10 @@ const tradeSchema = z.object({
   cryptoAmount: z.number().positive(),
 });
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const userId = getUserId(req);
-    const offerId = params.id;
+    const { id: offerId } = await params;
     const body = await req.json();
     const { cryptoAmount } = validate(tradeSchema, body);
 

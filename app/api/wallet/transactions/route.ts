@@ -27,6 +27,34 @@ import { and, eq, desc, count } from "drizzle-orm";
  *     summary: Paginated Transaction History
  *     description: Get paginated, filterable transaction history for the authenticated user.
  *     tags: [Wallet]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: type
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [deposit, withdrawal, sell, p2p_buy, p2p_sell, fee]
+ *       - in: query
+ *         name: status
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [pending, processing, completed, failed]
+ *       - in: query
+ *         name: symbol
+ *         required: false
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Success

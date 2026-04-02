@@ -23,6 +23,19 @@ import { generateUserEVMAddress } from "@/lib/blockchain/evm";
  *     summary: Get Deposit Address
  *     description: Returns (or lazily generates) the deposit address for the requested asset.
  *     tags: [Wallet]
+ *     parameters:
+ *       - in: query
+ *         name: symbol
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Asset symbol (e.g. BNB, USDT)
+ *       - in: query
+ *         name: network
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Network (e.g. BEP20, TRC20)
  *     responses:
  *       200:
  *         description: Success

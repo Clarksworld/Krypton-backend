@@ -9,6 +9,13 @@ import { ok, err, handleError } from "@/lib/errors";
  *     summary: Get Withdrawal Info
  *     description: Get withdrawal fee and minimum amount information for an asset.
  *     tags: [Wallet]
+ *     parameters:
+ *       - in: query
+ *         name: symbol
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Asset symbol (e.g. USDT)
  *     responses:
  *       200:
  *         description: Success

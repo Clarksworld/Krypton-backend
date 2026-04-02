@@ -10,6 +10,13 @@ import { ok, err, handleError } from "@/lib/errors";
  *     summary: Verify Target User
  *     description: Verify target user before internal transfer.
  *     tags: [Wallet]
+ *     parameters:
+ *       - in: query
+ *         name: username
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Krypton username of target user
  *     responses:
  *       200:
  *         description: Success

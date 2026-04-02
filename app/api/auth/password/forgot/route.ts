@@ -29,6 +29,9 @@ function generateOTP() {
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [email]
+ *             properties:
+ *             email: { type: string, format: email }
  *     responses:
  *       200:
  *         description: Success

@@ -60,6 +60,10 @@ export async function GET(req: NextRequest) {
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [email, otp]
+ *             properties:
+ *             email: { type: string, format: email }
+ *             otp: { type: string }
  *     responses:
  *       200:
  *         description: Success

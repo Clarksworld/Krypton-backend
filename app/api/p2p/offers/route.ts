@@ -61,6 +61,16 @@ export async function GET() {
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [type, assetSymbol, pricePerUnit, availableQty, minOrderFiat, maxOrderFiat, paymentMethod]
+ *             properties:
+ *             type: { type: string, enum: [buy, sell] }
+ *             assetSymbol: { type: string }
+ *             pricePerUnit: { type: number }
+ *             availableQty: { type: number }
+ *             minOrderFiat: { type: number }
+ *             maxOrderFiat: { type: number }
+ *             paymentMethod: { type: string }
+ *             paymentWindow: { type: number }
  *     responses:
  *       200:
  *         description: Success

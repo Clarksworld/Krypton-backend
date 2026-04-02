@@ -26,6 +26,10 @@ const depositSchema = z.object({
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [assetSymbol, amount]
+ *             properties:
+ *             assetSymbol: { type: string }
+ *             amount: { type: string }
  *     responses:
  *       200:
  *         description: Success

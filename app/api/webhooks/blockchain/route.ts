@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/db";
 import { wallets, transactions } from "@/db/schema";
 import { ok, err } from "@/lib/errors";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import { formatUnits } from "ethers";
 import crypto from "crypto";
 
@@ -164,6 +164,35 @@ function normalizeGeneric(body: any): NormalizedActivity[] {
 
 // ── Route handler ─────────────────────────────────────────────────────────
 
+/**
+ * @swagger
+ * /api/webhooks/blockchain:
+ *   post:
+ *     summary: Inbound Blockchain Webhook
+ *     description: Real-time notification for deposits and withdrawal confirmations. Requires x-webhook-secret header.
+ *     tags: [Infrastructure]
+ *     parameters:
+ *       - in: header
+ *         name: x-webhook-secret
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               txHash: { type: string }
+ *               toAddress: { type: string }
+ *               value: { type: string, description: "Atomic units (wei/satoshi)" }
+ *               asset: { type: string }
+ *     responses:
+ *       200:
+ *         description: Webhook received or processed
+ *       401:
+ *         description: Invalid webhook secret
+ */
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
 
@@ -236,35 +265,36 @@ export async function POST(req: NextRequest) {
   const skipped: string[] = [];
 
   for (const activity of activities) {
-    // Only process incoming transfers (to a deposit address)
-    if (!activity.toAddress || !activity.txHash) continue;
+    if (!activity.txHash) continue;
 
-    // Find the wallet that owns this deposit address
-    const wallet = await db.query.wallets.findFirst({
-      where: (w, { sql }) =>
-        sql`lower(${w.depositAddress}) = ${activity.toAddress}`,
-      with: { asset: true },
-    });
-
-    if (!wallet) {
-      console.log(`[webhook] No wallet found for address ${activity.toAddress}`);
-      skipped.push(activity.txHash);
-      continue;
-    }
-
-    // Idempotency: skip already-processed transactions
+    // 1. Check if we already have this transaction in our system
     const existing = await db.query.transactions.findFirst({
       where: (t, { eq }) => eq(t.reference, activity.txHash),
     });
 
     if (existing) {
-      // If it exists as 'pending' and this is now confirmed, upgrade it
-      if (existing.status === "pending" && activity.confirmed) {
-        await db
-          .update(transactions)
-          .set({ status: "completed" })
-          .where(eq(transactions.id, existing.id));
-        console.log(`[webhook] Upgraded tx ${activity.txHash} pending → completed`);
+      // If it exists but is not completed yet, and the webhook says it's confirmed, upgrade it.
+      if ((existing.status === "pending" || existing.status === "processing") && activity.confirmed) {
+        await db.transaction(async (tx) => {
+          await tx
+            .update(transactions)
+            .set({ status: "completed", updatedAt: new Date() })
+            .where(eq(transactions.id, existing.id));
+
+          // If it's a withdrawal, we need to finalize the frozen balance deduction
+          if (existing.type === "withdrawal") {
+            const totalDeduction = (Number(existing.amount) + Number(existing.fee || 0)).toFixed(8);
+            await tx
+              .update(wallets)
+              .set({ 
+                frozenBalance: sql`${wallets.frozenBalance} - ${totalDeduction}`,
+                updatedAt: new Date()
+              })
+              .where(and(eq(wallets.userId, existing.userId!), eq(wallets.assetId, existing.assetId!)));
+          }
+        });
+        
+        console.log(`[webhook] CONFIRMED ${existing.type} ${activity.txHash}`);
         processed.push(activity.txHash);
       } else {
         skipped.push(activity.txHash);
@@ -272,20 +302,36 @@ export async function POST(req: NextRequest) {
       continue;
     }
 
-    // Determine the amount in human-readable form
-    // For ERC20: value is in wei (raw uint256), for native: value is already in ether
+    // 2. If it's a NEW transaction, it's likely a deposit.
+    // Check if the toAddress is one of our managed deposit addresses.
+    if (!activity.toAddress) {
+      skipped.push(activity.txHash);
+      continue;
+    }
+
+    const wallet = await db.query.wallets.findFirst({
+      where: (w, { sql }) =>
+        sql`lower(${w.depositAddress}) = ${activity.toAddress}`,
+      with: { asset: true },
+    });
+
+    if (!wallet) {
+      console.log(`[webhook] No managed wallet found for address ${activity.toAddress}`);
+      skipped.push(activity.txHash);
+      continue;
+    }
+
+    // New Deposit Logic
     let amount: string;
     if (activity.isErc20) {
       try {
-        // parse as 18-decimal token amount (covers USDT on BSC testnet which is 18 decimals)
         amount = formatUnits(BigInt(activity.value), 18);
       } catch {
         amount = activity.value;
       }
     } else {
       try {
-        // Native value: could be wei string or already ether float string
-        amount = BigInt(activity.value) >= BigInt("1000000000") // looks like wei?
+        amount = BigInt(activity.value) >= BigInt("1000000000")
           ? formatUnits(BigInt(activity.value), 18)
           : String(activity.value);
       } catch {
@@ -295,7 +341,6 @@ export async function POST(req: NextRequest) {
 
     const status = activity.confirmed ? "completed" : "pending";
 
-    // Insert transaction + update balance atomically if confirmed
     await db.transaction(async (tx) => {
       await tx.insert(transactions).values({
         userId: wallet.userId,
@@ -314,18 +359,18 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Only update the balance for confirmed transactions
       if (activity.confirmed) {
         await tx
           .update(wallets)
-          .set({ balance: sql`${wallets.balance} + ${amount}` })
+          .set({ 
+            balance: sql`${wallets.balance} + ${amount}`,
+            updatedAt: new Date()
+          })
           .where(eq(wallets.id, wallet.id));
       }
     });
 
-    console.log(
-      `[webhook] ${status.toUpperCase()} deposit: ${amount} ${wallet.asset.symbol} → ${activity.toAddress} (tx: ${activity.txHash})`
-    );
+    console.log(`[webhook] NEW DEPOSIT ${status.toUpperCase()} ${amount} ${wallet.asset.symbol} to ${activity.toAddress}`);
     processed.push(activity.txHash);
   }
 

@@ -16,6 +16,23 @@ function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+/**
+ * @swagger
+ * /api/auth/password/forgot:
+ *   post:
+ *     summary: Forgot Password
+ *     description: Request a password reset link.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

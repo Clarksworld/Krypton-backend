@@ -47,6 +47,23 @@ export async function GET(req: NextRequest) {
 }
 
 // POST handler for manual OTP entry
+/**
+ * @swagger
+ * /api/auth/verify-email:
+ *   post:
+ *     summary: Verify Email
+ *     description: Verify user email with token.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

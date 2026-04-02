@@ -3,6 +3,17 @@ import { db } from "@/db";
 import { getUserId } from "@/lib/auth";
 import { ok, err, handleError } from "@/lib/errors";
 
+/**
+ * @swagger
+ * /api/wallet/transfer/verify:
+ *   get:
+ *     summary: Verify Target User
+ *     description: Verify target user before internal transfer.
+ *     tags: [Wallet]
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 export async function GET(req: NextRequest) {
   try {
     const userId = getUserId(req);

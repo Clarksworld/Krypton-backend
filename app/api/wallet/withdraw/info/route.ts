@@ -2,6 +2,17 @@ import { NextRequest } from "next/server";
 import { db } from "@/db";
 import { ok, err, handleError } from "@/lib/errors";
 
+/**
+ * @swagger
+ * /api/wallet/withdraw/info:
+ *   get:
+ *     summary: Get Withdrawal Info
+ *     description: Get withdrawal fee and minimum amount information for an asset.
+ *     tags: [Wallet]
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);

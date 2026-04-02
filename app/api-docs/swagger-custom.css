@@ -1,0 +1,4 @@
+/* Custom Swagger Overrides */
+.swagger-ui .topbar {
+  display: none; /* Hide the default topbar if not needed */
+}

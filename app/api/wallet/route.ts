@@ -4,6 +4,21 @@ import { getUserId } from "@/lib/auth";
 import { ok, handleError } from "@/lib/errors";
 import { checkOnChainDeposits } from "@/lib/blockchain/monitor";
 
+/**
+ * @swagger
+ * /api/wallet:
+ *   get:
+ *     summary: Get all wallets and balances for the current user
+ *     description: Fetch a list of all user wallets with their respective assets, balances, and deposit addresses.
+ *     tags: [Wallet]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Success
+ *       401:
+ *         description: Unauthorized
+ */
 export async function GET(req: NextRequest) {
   try {
     const userId = getUserId(req);

@@ -3,6 +3,17 @@ import { db } from "@/db";
 import { getUserId } from "@/lib/auth";
 import { ok, handleError } from "@/lib/errors";
 
+/**
+ * @swagger
+ * /api/transactions:
+ *   get:
+ *     summary: Transaction History
+ *     description: Get user transaction history.
+ *     tags: [History]
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 export async function GET(req: NextRequest) {
   try {
     const userId = getUserId(req);

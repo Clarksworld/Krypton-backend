@@ -16,6 +16,17 @@ import { generateUserEVMAddress } from "@/lib/blockchain/evm";
  *   symbol   - required  - e.g. "BNB", "USDT", "ETH"
  *   network  - optional  - e.g. "BEP20", "TRC20", "ERC20" (defaults to first available)
  */
+/**
+ * @swagger
+ * /api/wallet/address:
+ *   get:
+ *     summary: Get Deposit Address
+ *     description: Returns (or lazily generates) the deposit address for the requested asset.
+ *     tags: [Wallet]
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 export async function GET(req: NextRequest) {
   try {
     const userId = getUserId(req);

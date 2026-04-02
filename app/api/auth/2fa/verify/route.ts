@@ -6,6 +6,30 @@ import { getUserId } from "@/lib/auth";
 import { verifySync } from "otplib";
 import { err, handleError } from "@/lib/errors";
 
+/**
+ * @swagger
+ * /api/auth/2fa/verify:
+ *   post:
+ *     summary: Verify and enable 2FA
+ *     description: Finalize 2FA setup by verifying a 6-digit code from the authenticator app.
+ *     tags: [Auth]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [token]
+ *             properties:
+ *               token: { type: string, minLength: 6, maxLength: 6 }
+ *     responses:
+ *       200:
+ *         description: Success
+ *       400:
+ *         description: Invalid code or 2FA already enabled
+ */
 export async function POST(req: NextRequest) {
   try {
     const userId = getUserId(req);

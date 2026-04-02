@@ -13,6 +13,7 @@ const envSchema = z.object({
   // Optional: shared secret for /api/webhooks/blockchain (set when connecting Alchemy/Moralis)
   WEBHOOK_SECRET: z.string().min(16).optional(),
   WORKER_SECRET: z.string().min(10).optional().default("development_secret_only"),
+  NEXT_PUBLIC_APP_URL: z.string().url().optional(),
 });
 
 export function validateEnv() {

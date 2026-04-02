@@ -3,6 +3,23 @@ import { getUserId } from "@/lib/auth";
 import { ok, handleError } from "@/lib/errors";
 import { checkOnChainDeposits } from "@/lib/blockchain/monitor";
 
+/**
+ * @swagger
+ * /api/wallet/deposit/check:
+ *   post:
+ *     summary: Check On-chain Deposits
+ *     description: Check the blockchain for new on-chain deposits.
+ *     tags: [Wallet]
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 export async function POST(req: NextRequest) {
   try {
     const userId = getUserId(req);

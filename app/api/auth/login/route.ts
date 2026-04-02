@@ -11,6 +11,29 @@ const loginSchema = z.object({
   password: z.string(),
 });
 
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Log in to an account
+ *     description: Authenticate user with email and password to receive a JWT and session cookie.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email: { type: string, format: email }
+ *               password: { type: string }
+ *     responses:
+ *       200:
+ *         description: Success
+ *       401:
+ *         description: Invalid email/password or email not verified
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

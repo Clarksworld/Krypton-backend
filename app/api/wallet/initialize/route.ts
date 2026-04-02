@@ -6,6 +6,23 @@ import { ok, handleError, ApiError } from "@/lib/errors";
 import { eq } from "drizzle-orm";
 import { generateUserEVMAddress } from "@/lib/blockchain/evm";
 
+/**
+ * @swagger
+ * /api/wallet/initialize:
+ *   post:
+ *     summary: Initialize Wallets
+ *     description: Initialize base cryptocurrency wallets for the user.
+ *     tags: [Wallet]
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 export async function POST(req: NextRequest) {
   try {
     const userId = getUserId(req);

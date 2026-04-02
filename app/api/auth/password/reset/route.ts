@@ -13,6 +13,23 @@ const resetPasswordSchema = z.object({
   newPassword: z.string().min(8, "Password must be at least 8 characters"),
 });
 
+/**
+ * @swagger
+ * /api/auth/password/reset:
+ *   post:
+ *     summary: Reset Password
+ *     description: Reset user password using a token.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

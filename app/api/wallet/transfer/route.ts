@@ -6,6 +6,33 @@ import { wallets, transactions, users } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { verifySync } from "otplib";
 
+/**
+ * @swagger
+ * /api/wallet/transfer:
+ *   post:
+ *     summary: Internal transfer to another user
+ *     description: Transfer crypto assets instantly to another Krypton user by their username. 2FA required.
+ *     tags: [Wallet]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [symbol, amount, username]
+ *             properties:
+ *               symbol: { type: string, example: USDT }
+ *               amount: { type: string, example: "10.5" }
+ *               username: { type: string, example: "cryptoking" }
+ *               otp: { type: string, example: "123456" }
+ *     responses:
+ *       200:
+ *         description: Transfer successful
+ *       403:
+ *         description: 2FA required or not enabled
+ */
 export async function POST(req: NextRequest) {
   try {
     const userId = getUserId(req);

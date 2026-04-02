@@ -16,6 +16,30 @@ const registerSchema = z.object({
   username: z.string().min(3).optional(),
 });
 
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new account
+ *     description: Create a new user account and initialize their profile/settings.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email: { type: string, format: email }
+ *               password: { type: string, minLength: 8 }
+ *               username: { type: string }
+ *     responses:
+ *       201:
+ *         description: Success
+ *       400:
+ *         description: Validation error or Email/Username taken
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

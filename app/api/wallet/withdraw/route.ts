@@ -7,6 +7,33 @@ import { and, eq, sql } from "drizzle-orm";
 import { isValidEVMAddress } from "@/lib/blockchain/evm";
 import { verifySync } from "otplib";
 
+/**
+ * @swagger
+ * /api/wallet/withdraw:
+ *   post:
+ *     summary: Request a withdrawal
+ *     description: Initiate an external crypto withdrawal from your user account. 2FA must be enabled and verified.
+ *     tags: [Wallet]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [symbol, amount, address]
+ *             properties:
+ *               symbol: { type: string, example: USDT }
+ *               amount: { type: string, example: "50" }
+ *               address: { type: string, example: "0x..." }
+ *               otp: { type: string, example: "123456" }
+ *     responses:
+ *       202:
+ *         description: Withdrawal accepted and pending
+ *       403:
+ *         description: 2FA required
+ */
 export async function POST(req: NextRequest) {
   try {
     const userId = getUserId(req);

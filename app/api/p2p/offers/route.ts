@@ -18,6 +18,17 @@ const createOfferSchema = z.object({
   paymentWindow: z.number().int().min(5).max(60).optional(),
 });
 
+/**
+ * @swagger
+ * /api/p2p/offers:
+ *   get:
+ *     summary: List P2P Offers
+ *     description: Get available P2P offers.
+ *     tags: [P2P]
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 export async function GET() {
   try {
     const list = await db.query.p2pOffers.findMany({
@@ -37,6 +48,23 @@ export async function GET() {
   }
 }
 
+/**
+ * @swagger
+ * /api/p2p/offers:
+ *   post:
+ *     summary: Create P2P Offer
+ *     description: Create a new P2P offer.
+ *     tags: [P2P]
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 export async function POST(req: NextRequest) {
   try {
     const userId = getUserId(req);

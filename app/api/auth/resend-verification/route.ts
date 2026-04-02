@@ -12,6 +12,23 @@ const resendVerificationSchema = z.object({
   email: z.string().email(),
 });
 
+/**
+ * @swagger
+ * /api/auth/resend-verification:
+ *   post:
+ *     summary: Resend Verification
+ *     description: Resend email verification link.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

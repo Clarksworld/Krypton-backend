@@ -8,6 +8,13 @@
       "when": 1774896315534,
       "tag": "0000_light_logan",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775105456526,
+      "tag": "0001_needy_firestar",
+      "breakpoints": true
     }
   ]
 }

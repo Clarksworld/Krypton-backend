@@ -7,6 +7,17 @@ import { generateSecret, generateURI } from "otplib";
 import QRCode from "qrcode";
 import { err, handleError } from "@/lib/errors";
 
+/**
+ * @swagger
+ * /api/auth/2fa/generate:
+ *   get:
+ *     summary: Generate 2FA
+ *     description: Generate 2FA secret and QR code URI.
+ *     tags: [Auth, Security]
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 export async function GET(req: NextRequest) {
   try {
     const userId = getUserId(req);

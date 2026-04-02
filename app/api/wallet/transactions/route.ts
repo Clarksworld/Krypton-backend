@@ -20,6 +20,17 @@ import { and, eq, desc, count } from "drizzle-orm";
  * Response:
  *   { transactions, pagination: { page, limit, total, totalPages } }
  */
+/**
+ * @swagger
+ * /api/wallet/transactions:
+ *   get:
+ *     summary: Paginated Transaction History
+ *     description: Get paginated, filterable transaction history for the authenticated user.
+ *     tags: [Wallet]
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 export async function GET(req: NextRequest) {
   try {
     const userId = getUserId(req);

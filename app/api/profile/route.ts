@@ -14,6 +14,17 @@ const updateProfileSchema = z.object({
   avatarUrl: z.string().url().optional(),
 });
 
+/**
+ * @swagger
+ * /api/profile:
+ *   get:
+ *     summary: Get Profile
+ *     description: Get user profile details.
+ *     tags: [Profile]
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 export async function GET(req: NextRequest) {
   try {
     const userId = getUserId(req);

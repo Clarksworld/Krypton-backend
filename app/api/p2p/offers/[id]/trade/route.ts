@@ -10,6 +10,23 @@ const tradeSchema = z.object({
   cryptoAmount: z.number().positive(),
 });
 
+/**
+ * @swagger
+ * /api/p2p/offers/{id}/trade:
+ *   post:
+ *     summary: Initiate P2P Trade
+ *     description: Initiate a P2P trade on an offer.
+ *     tags: [P2P]
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const userId = getUserId(req);

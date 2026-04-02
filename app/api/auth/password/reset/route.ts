@@ -28,9 +28,9 @@ const resetPasswordSchema = z.object({
  *             type: object
  *             required: [email, token, newPassword]
  *             properties:
- *             email: { type: string, format: email }
- *             token: { type: string }
- *             newPassword: { type: string }
+ *               email: { type: string, format: email }
+ *               token: { type: string }
+ *               newPassword: { type: string }
  *     responses:
  *       200:
  *         description: Success

@@ -28,8 +28,8 @@ const depositSchema = z.object({
  *             type: object
  *             required: [assetSymbol, amount]
  *             properties:
- *             assetSymbol: { type: string }
- *             amount: { type: string }
+ *               assetSymbol: { type: string }
+ *               amount: { type: string }
  *     responses:
  *       200:
  *         description: Success

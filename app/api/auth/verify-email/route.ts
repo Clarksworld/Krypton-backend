@@ -62,8 +62,8 @@ export async function GET(req: NextRequest) {
  *             type: object
  *             required: [email, otp]
  *             properties:
- *             email: { type: string, format: email }
- *             otp: { type: string }
+ *               email: { type: string, format: email }
+ *               otp: { type: string }
  *     responses:
  *       200:
  *         description: Success

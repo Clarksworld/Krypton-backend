@@ -25,7 +25,7 @@ const tradeSchema = z.object({
  *             type: object
  *             required: [cryptoAmount]
  *             properties:
- *             cryptoAmount: { type: number }
+ *               cryptoAmount: { type: number }
  *     responses:
  *       200:
  *         description: Success

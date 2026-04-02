@@ -1,10 +1,11 @@
 import { NextRequest } from "next/server";
 import { db } from "@/db";
-import { p2pTrades, transactions } from "@/db/schema";
+import { p2pTrades, transactions, wallets, p2pOffers } from "@/db/schema";
 import { getUserId } from "@/lib/auth";
 import { ok, handleError, ApiError } from "@/lib/errors";
 import { validate } from "@/lib/validate";
 import { z } from "zod";
+import { eq, sql } from "drizzle-orm";
 
 const tradeSchema = z.object({
   cryptoAmount: z.number().positive(),
@@ -18,7 +19,7 @@ const tradeSchema = z.object({
  *     description: Initiate a P2P trade on an offer.
  *     tags: [P2P]
  *     requestBody:
- *       required: false
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
@@ -61,8 +62,32 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       throw new ApiError(`Amount out of bounds (Min: ${min}, Max: ${max})`, 400);
     }
 
+    // Verify seller's crypto balance before starting trade
+    // If offer is SELL: Maker is selling crypto.
+    // If offer is BUY: Taker is selling crypto.
+    const sellerId = offer.type === "sell" ? offer.makerId : userId;
+    const sellerWallet = await db.query.wallets.findFirst({
+      where: (w, { eq, and }) =>
+        and(eq(w.userId, sellerId), eq(w.assetId, offer.assetId)),
+    });
+
+    if (!sellerWallet || parseFloat(sellerWallet.balance || "0") < cryptoAmount) {
+      throw new ApiError("Seller has insufficient balance to cover this trade amount", 400);
+    }
+
     // Create trade in transaction
     const trade = await db.transaction(async (tx) => {
+        
+      // ── ESCROW: Move crypto from balance to frozenBalance ──────────
+      await tx
+        .update(wallets)
+        .set({
+          balance: sql`${wallets.balance} - ${cryptoAmount}`,
+          frozenBalance: sql`${wallets.frozenBalance} + ${cryptoAmount}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(wallets.id, sellerWallet.id));
+
       const [newTrade] = await tx
         .insert(p2pTrades)
         .values({

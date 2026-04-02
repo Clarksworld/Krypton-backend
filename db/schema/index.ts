@@ -6,3 +6,6 @@ export * from "./bank_accounts";
 export * from "./transactions";
 export * from "./p2p";
 export * from "./notifications";
+export * from "./mining";
+export * from "./subscriptions";
+export * from "./settings";

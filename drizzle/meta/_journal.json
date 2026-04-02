@@ -15,6 +15,13 @@
       "when": 1775105456526,
       "tag": "0001_needy_firestar",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775146541060,
+      "tag": "0002_brave_star_brand",
+      "breakpoints": true
     }
   ]
 }

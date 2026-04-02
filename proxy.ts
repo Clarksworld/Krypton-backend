@@ -31,6 +31,9 @@ export async function proxy(request: NextRequest) {
       // Add user ID to headers so downstream route handlers can use it
       const requestHeaders = new Headers(request.headers);
       requestHeaders.set("x-user-id", payload.sub);
+      if ((payload as any).role) {
+        requestHeaders.set("x-user-role", (payload as any).role);
+      }
 
       return NextResponse.next({
         request: {

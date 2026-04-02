@@ -33,3 +33,22 @@ export function getUserId(req: Request | Headers): string {
   }
   return userId;
 }
+
+/**
+ * Checks whether the requester is an admin.
+ * Returns the userId or throws a 403 error.
+ */
+export function getAdminId(req: Request | Headers): string {
+  const headers = req instanceof Headers ? req : req.headers;
+  const userId = headers.get("x-user-id");
+  const role = headers.get("x-user-role");
+  if (!userId) {
+    throw new Error("User ID not found in headers. Is the route protected?");
+  }
+  if (role !== "admin") {
+    const err = new Error("Admin access required");
+    (err as any).statusCode = 403;
+    throw err;
+  }
+  return userId;
+}

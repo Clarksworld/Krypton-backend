@@ -43,7 +43,7 @@ import { and, eq, desc, count } from "drizzle-orm";
  *         required: false
  *         schema:
  *           type: string
- *           enum: [deposit, withdrawal, sell, p2p_buy, p2p_sell, fee]
+ *           enum: [deposit, withdrawal, internal_transfer, sell, swap, p2p_buy, p2p_sell, fee]
  *       - in: query
  *         name: status
  *         required: false
@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
     const statusFilter = searchParams.get("status") ?? null;
     const symbolFilter = searchParams.get("symbol")?.toUpperCase() ?? null;
 
-    const VALID_TYPES = ["deposit", "withdrawal", "internal_transfer", "sell", "p2p_buy", "p2p_sell", "fee"];
+    const VALID_TYPES = ["deposit", "withdrawal", "internal_transfer", "sell", "swap", "p2p_buy", "p2p_sell", "fee"];
     const VALID_STATUSES = ["pending", "processing", "completed", "failed"];
 
     if (typeFilter && !VALID_TYPES.includes(typeFilter)) {
@@ -184,6 +184,7 @@ function buildLabel(type: string | null, status: string | null): string {
     withdrawal: "Withdrawal",
     internal_transfer: "Internal Transfer",
     sell: "Sell",
+    swap: "Swap",
     p2p_buy: "P2P Buy",
     p2p_sell: "P2P Sell",
     fee: "Fee",

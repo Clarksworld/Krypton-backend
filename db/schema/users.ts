@@ -24,6 +24,7 @@ export const users = pgTable("users", {
   passwordResetExpires: timestamp("password_reset_expires", { withTimezone: true }),
   twoFactorSecret: text("two_factor_secret"),
   isTwoFactorEnabled: boolean("is_two_factor_enabled").default(false),
+  isAdmin: boolean("is_admin").default(false),
   last2faVerifiedAt: timestamp("last_2fa_verified_at", { withTimezone: true }),
   userIndex: serial("user_index").notNull().unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),

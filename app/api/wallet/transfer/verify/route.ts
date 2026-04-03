@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
       return err("Krypton Tag (username) is required", 400);
     }
 
-    const targetUser = await db.query.users.findFirst({
+    const targetUser: any = await db.query.users.findFirst({
       where: (u, { eq }) => eq(u.username, username),
       with: {
         profile: {

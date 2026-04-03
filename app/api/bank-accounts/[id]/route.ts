@@ -29,11 +29,11 @@ import { eq, and } from "drizzle-orm";
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = getUserId(req);
-    const { id } = params;
+    const { id } = await params;
 
     const account = await db.query.bankAccounts.findFirst({
       where: (b, { eq, and }) => and(eq(b.id, id), eq(b.userId, userId)),
@@ -86,11 +86,11 @@ export async function DELETE(
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = getUserId(req);
-    const { id } = params;
+    const { id } = await params;
 
     const account = await db.query.bankAccounts.findFirst({
       where: (b, { eq, and }) => and(eq(b.id, id), eq(b.userId, userId)),

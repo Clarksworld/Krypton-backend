@@ -29,11 +29,11 @@ import { eq, sql } from "drizzle-orm";
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = getUserId(req);
-    const { id: taskId } = params;
+    const { id: taskId } = await params;
 
     const task = await db.query.tasks.findFirst({
       where: (t, { eq, and }) => and(eq(t.id, taskId), eq(t.isActive, true)),

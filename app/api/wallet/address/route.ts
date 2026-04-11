@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { db } from "@/db";
-import { wallets } from "@/db/schema";
+import { wallets, cryptoAssets } from "@/db/schema";
 import { getUserId } from "@/lib/auth";
 import { ok, err, handleError, ApiError } from "@/lib/errors";
 import { eq, and } from "drizzle-orm";
@@ -52,11 +52,25 @@ export async function GET(req: NextRequest) {
     }
 
     // 1. Find the asset
-    const asset = await db.query.cryptoAssets.findFirst({
+    let asset = await db.query.cryptoAssets.findFirst({
       where: (ca, { eq, and }) => and(eq(ca.symbol, symbol), eq(ca.isActive, true)),
     });
 
-    if (!asset) {
+    // Auto-create BEP20 token if not found
+    if (!asset && requestedNetwork === "BEP20") {
+      const [newAsset] = await db.insert(cryptoAssets).values({
+        symbol,
+        name: `${symbol} Token`,
+        isActive: true,
+        networks: [
+          {
+            name: "BEP20",
+            addressRegex: "^0x[a-fA-F0-9]{40}$",
+          },
+        ],
+      }).returning();
+      asset = newAsset;
+    } else if (!asset) {
       return err(`Asset '${symbol}' not found or inactive`, 404);
     }
 
@@ -67,7 +81,18 @@ export async function GET(req: NextRequest) {
       ? networks.find((n: any) => n.name.toUpperCase() === requestedNetwork)
       : networks[0]; // default: first available network
 
-    if (!selectedNetwork) {
+    // If BEP20 is requested but not in the asset's networks, automatically add it
+    if (!selectedNetwork && requestedNetwork === "BEP20") {
+      selectedNetwork = {
+        name: "BEP20",
+        addressRegex: "^0x[a-fA-F0-9]{40}$",
+      };
+      
+      const updatedNetworks = [...networks, selectedNetwork];
+      await db.update(cryptoAssets)
+        .set({ networks: updatedNetworks })
+        .where(eq(cryptoAssets.id, asset.id));
+    } else if (!selectedNetwork) {
       return err(
         `Network '${requestedNetwork}' not supported for ${symbol}. ` +
           `Available: ${networks.map((n: any) => n.name).join(", ")}`,

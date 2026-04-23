@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { getUserId } from "@/lib/auth";
 import { ok, handleError } from "@/lib/errors";
 import { checkOnChainDeposits } from "@/lib/blockchain/monitor";
+import { getNgnRate, computePortfolioValue } from "@/lib/pricing";
 
 /**
  * @swagger
@@ -39,8 +40,17 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    // Fetch NGN rate (from admin settings or fallback)
+    const ngnRate = await getNgnRate();
+
+    // Compute USD/NGN values per wallet
+    const { perWallet, totalBalanceUsd, totalBalanceNgn } = computePortfolioValue(
+      userWallets.map((w) => ({ symbol: w.asset.symbol, balance: w.balance })),
+      ngnRate
+    );
+
     // Format for frontend
-    const walletsInfo = userWallets.map((w) => ({
+    const walletsInfo = userWallets.map((w, i) => ({
       id: w.id,
       symbol: w.asset.symbol,
       name: w.asset.name,
@@ -48,9 +58,15 @@ export async function GET(req: NextRequest) {
       balance: w.balance,
       frozenBalance: w.frozenBalance,
       depositAddress: w.depositAddress,
+      usdValue: perWallet[i].usdValue.toFixed(2),
+      ngnValue: perWallet[i].ngnValue.toFixed(2),
     }));
 
-    return ok({ wallets: walletsInfo });
+    return ok({
+      wallets: walletsInfo,
+      totalBalanceUsd: totalBalanceUsd.toFixed(2),
+      totalBalanceNgn: totalBalanceNgn.toFixed(2),
+    });
   } catch (err) {
     return handleError(err);
   }

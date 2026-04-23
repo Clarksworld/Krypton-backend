@@ -26,6 +26,7 @@ export const users = pgTable("users", {
   isTwoFactorEnabled: boolean("is_two_factor_enabled").default(false),
   isAdmin: boolean("is_admin").default(false),
   last2faVerifiedAt: timestamp("last_2fa_verified_at", { withTimezone: true }),
+  passwordUpdatedAt: timestamp("password_updated_at", { withTimezone: true }),
   userIndex: serial("user_index").notNull().unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
@@ -40,6 +41,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   bankAccounts: many(bankAccounts),
   transactions: many(transactions),
   notifications: many(notifications),
+  sessions: many(userSessions),
 }));
 
 export const userProfiles = pgTable("user_profiles", {
@@ -52,12 +54,35 @@ export const userProfiles = pgTable("user_profiles", {
   country: text("country"),
   kycLevel: text("kyc_level").default("0"),    // 0 | 1 | 2
   kycStatus: text("kyc_status").default("unverified"), // unverified|pending|approved|failed
+  privatePortfolio: boolean("private_portfolio").default(false),
+  preferredCurrency: text("preferred_currency").default("USD"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
 export const userProfilesRelations = relations(userProfiles, ({ one }) => ({
   user: one(users, {
     fields: [userProfiles.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userSessions = pgTable("user_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull(),
+  deviceName: text("device_name"),
+  location: text("location"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const userSessionsRelations = relations(userSessions, ({ one }) => ({
+  user: one(users, {
+    fields: [userSessions.userId],
     references: [users.id],
   }),
 }));

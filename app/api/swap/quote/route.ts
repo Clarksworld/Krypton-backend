@@ -3,13 +3,7 @@ import { db } from "@/db";
 import { getUserId } from "@/lib/auth";
 import { ok, err, handleError } from "@/lib/errors";
 
-const MOCK_RATES: Record<string, number> = {
-  "BTC": 65000,
-  "ETH": 3500,
-  "BNB": 580,
-  "USDT": 1,
-  "USDC": 1,
-};
+import { getCryptoRates } from "@/lib/rates";
 
 /**
  * @swagger
@@ -44,8 +38,9 @@ export async function POST(req: NextRequest) {
       return err("fromSymbol, toSymbol, and amount are required", 400);
     }
 
-    const fromRate = MOCK_RATES[fromSymbol.toUpperCase()] || 0;
-    const toRate = MOCK_RATES[toSymbol.toUpperCase()] || 0;
+    const rates = await getCryptoRates([fromSymbol, toSymbol]);
+    const fromRate = rates[fromSymbol.toUpperCase()] || 0;
+    const toRate = rates[toSymbol.toUpperCase()] || 0;
 
     if (fromRate === 0 || toRate === 0) {
       return err("Unsupported trading pair", 400);

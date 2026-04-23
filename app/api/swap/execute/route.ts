@@ -7,13 +7,7 @@ import { getUserId } from "@/lib/auth";
 import { ok, err, handleError } from "@/lib/errors";
 import { eq, and, sql } from "drizzle-orm";
 
-const MOCK_RATES: Record<string, number> = {
-  "BTC": 65000,
-  "ETH": 3500,
-  "BNB": 580,
-  "USDT": 1,
-  "USDC": 1,
-};
+import { getCryptoRates } from "@/lib/rates";
 
 /**
  * @swagger
@@ -47,8 +41,9 @@ export async function POST(req: NextRequest) {
     const topAsset = fromSymbol.toUpperCase();
     const botAsset = toSymbol.toUpperCase();
 
-    const fromRate = MOCK_RATES[topAsset] || 0;
-    const toRate = MOCK_RATES[botAsset] || 0;
+    const rates = await getCryptoRates([topAsset, botAsset]);
+    const fromRate = rates[topAsset] || 0;
+    const toRate = rates[botAsset] || 0;
     if (fromRate === 0 || toRate === 0) return err("Unsupported trading pair", 400);
 
     const numAmount = parseFloat(amount);

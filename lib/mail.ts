@@ -78,3 +78,32 @@ export async function sendPasswordResetEmail(email: string, otp: string) {
     throw error;
   }
 }
+
+export async function sendSupportEmail(userEmail: string, subject: string, message: string, category: string) {
+  if (!transporter) {
+    console.warn(`[MAIL MOCK] Support ticket from ${userEmail}: [${category}] ${subject} - ${message}`);
+    return;
+  }
+
+  try {
+    await transporter.sendMail({
+      from: `"Krypton Support System" <${gmailUser}>`,
+      to: gmailUser, // send to the support admin email (using self for now)
+      replyTo: userEmail,
+      subject: `Support Request: [${category}] ${subject}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+          <h2 style="color: #333;">New Support Request</h2>
+          <p><strong>From:</strong> ${userEmail}</p>
+          <p><strong>Category:</strong> ${category}</p>
+          <p><strong>Subject:</strong> ${subject}</p>
+          <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;" />
+          <p style="white-space: pre-wrap;">${message}</p>
+        </div>
+      `,
+    });
+  } catch (error) {
+    console.error("Error sending support email:", error);
+    throw error;
+  }
+}

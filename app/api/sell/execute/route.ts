@@ -5,14 +5,8 @@ import { getUserId } from "@/lib/auth";
 import { ok, err, handleError } from "@/lib/errors";
 import { eq, and, sql } from "drizzle-orm";
 
-const MOCK_USD_TO_NGN = 1600; 
-const MOCK_RATES: Record<string, number> = {
-  "BTC": 65000,
-  "ETH": 3500,
-  "BNB": 580,
-  "USDT": 1,
-  "USDC": 1,
-};
+import { getCryptoRates } from "@/lib/rates";
+const MOCK_USD_TO_NGN = 1600;
 
 /**
  * @swagger
@@ -43,7 +37,8 @@ export async function POST(req: NextRequest) {
     const { symbol, amount } = await req.json();
 
     const topAsset = symbol.toUpperCase();
-    const rateUsd = MOCK_RATES[topAsset] || 0;
+    const rates = await getCryptoRates([topAsset]);
+    const rateUsd = rates[topAsset] || 0;
     if (rateUsd === 0) return err("Unsupported asset", 400);
 
     const numAmount = parseFloat(amount);

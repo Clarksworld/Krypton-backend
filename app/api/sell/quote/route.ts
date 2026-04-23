@@ -3,14 +3,8 @@ import { db } from "@/db";
 import { getUserId } from "@/lib/auth";
 import { ok, err, handleError } from "@/lib/errors";
 
+import { getCryptoRates } from "@/lib/rates";
 const MOCK_USD_TO_NGN = 1600; // 1 USD = 1600 NGN
-const MOCK_RATES: Record<string, number> = {
-  "BTC": 65000,
-  "ETH": 3500,
-  "BNB": 580,
-  "USDT": 1,
-  "USDC": 1,
-};
 
 /**
  * @swagger
@@ -44,7 +38,8 @@ export async function POST(req: NextRequest) {
       return err("symbol and amount are required", 400);
     }
 
-    const rateUsd = MOCK_RATES[symbol.toUpperCase()] || 0;
+    const rates = await getCryptoRates([symbol.toUpperCase()]);
+    const rateUsd = rates[symbol.toUpperCase()] || 0;
     if (rateUsd === 0) return err("Unsupported asset", 400);
 
     const numAmount = parseFloat(amount);

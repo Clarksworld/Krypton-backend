@@ -9,8 +9,8 @@ import { ok, handleError } from "@/lib/errors";
  *     summary: List Supported Tokens
  *     description: >
  *       Returns all active crypto assets supported by the platform.
- *       No authentication required. Use this to populate deposit/withdraw
- *       token selectors on the frontend.
+ *       If the user is authenticated (x-user-id header present), includes their balance for each token.
+ *       Use this to populate deposit/withdraw token selectors with balance info.
  *     tags: [Tokens]
  *     responses:
  *       200:
@@ -29,6 +29,7 @@ import { ok, handleError } from "@/lib/errors";
  *                       symbol: { type: string, example: USDT }
  *                       name: { type: string, example: Tether USD }
  *                       iconUrl: { type: string }
+ *                       balance: { type: string, example: "125.50" }
  *                       networks:
  *                         type: array
  *                         items:
@@ -40,6 +41,8 @@ import { ok, handleError } from "@/lib/errors";
  */
 export async function GET(req: NextRequest) {
   try {
+    const userId = req.headers.get("x-user-id");
+
     const tokens = await db.query.cryptoAssets.findMany({
       where: (asset, { eq }) => eq(asset.isActive, true),
       columns: {
@@ -53,7 +56,27 @@ export async function GET(req: NextRequest) {
       orderBy: (asset, { asc }) => [asc(asset.symbol)],
     });
 
-    return ok({ tokens });
+    let userBalances: Record<string, string> = {};
+
+    if (userId) {
+      const wallets = await db.query.wallets.findMany({
+        where: (w, { eq }) => eq(w.userId, userId),
+        columns: {
+          assetId: true,
+          balance: true,
+        },
+      });
+      wallets.forEach((w) => {
+        userBalances[w.assetId] = w.balance || "0";
+      });
+    }
+
+    const tokensWithBalance = tokens.map((token) => ({
+      ...token,
+      balance: userBalances[token.id] || "0",
+    }));
+
+    return ok({ tokens: tokensWithBalance });
   } catch (error) {
     return handleError(error);
   }

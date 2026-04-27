@@ -95,3 +95,21 @@ export const userMiningUpgradeRelations = relations(userMiningUpgrades, ({ one }
     references: [miningUpgrades.id],
   }),
 }));
+
+export const miningStatsRelations = relations(miningStats, ({ one }) => ({
+  user: one(users, {
+    fields: [miningStats.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userTasksRelations = relations(userTasks, ({ one }) => ({
+  user: one(users, {
+    fields: [userTasks.userId],
+    references: [users.id],
+  }),
+  task: one(tasks, {
+    fields: [userTasks.taskId],
+    references: [tasks.id],
+  }),
+}));

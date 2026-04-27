@@ -12,6 +12,8 @@ export async function proxy(request: NextRequest) {
     "/api/auth/password/reset",
     "/api/auth/verify-email",
     "/api/auth/resend-verification",
+    "/api/admin/auth/login",
+    "/api/admin/auth/register",
     "/api/workers",
     "/api/webhooks",
   ];

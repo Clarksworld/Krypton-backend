@@ -39,7 +39,12 @@ export async function GET(req: NextRequest) {
     const hoursSinceLast = msSinceLast / (1000 * 60 * 60);
     const pendingAccrual = hoursSinceLast * parseFloat(stats.miningRate || "0");
 
-    const nextClaimAt = new Date(lastClaimed.getTime() + 24 * 60 * 60 * 1000);
+    const setting = await db.query.globalSettings.findFirst({
+      where: (s, { eq }) => eq(s.key, "mining_countdown_seconds"),
+    });
+    const countdownSeconds = setting ? parseInt(setting.value) : 86400;
+
+    const nextClaimAt = new Date(lastClaimed.getTime() + countdownSeconds * 1000);
     const canClaim = now >= nextClaimAt;
     
     return ok({ 

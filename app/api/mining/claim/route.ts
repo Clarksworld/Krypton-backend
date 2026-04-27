@@ -30,8 +30,20 @@ export async function POST(req: NextRequest) {
       return err("Mining not initialized", 400);
     }
 
+    const setting = await db.query.globalSettings.findFirst({
+      where: (s, { eq }) => eq(s.key, "mining_countdown_seconds"),
+    });
+    const countdownSeconds = setting ? parseInt(setting.value) : 86400;
+
     const now = new Date();
-    const msSinceLast = now.getTime() - new Date(stats.lastClaimedAt || stats.createdAt!).getTime();
+    const lastClaimed = new Date(stats.lastClaimedAt || stats.createdAt!);
+    const msSinceLast = now.getTime() - lastClaimed.getTime();
+    
+    const nextClaimAt = new Date(lastClaimed.getTime() + countdownSeconds * 1000);
+    if (now < nextClaimAt) {
+      return err("Mining countdown not yet complete", 400);
+    }
+
     const hoursSinceLast = msSinceLast / (1000 * 60 * 60);
     const pendingAccrual = hoursSinceLast * parseFloat(stats.miningRate || "0");
 

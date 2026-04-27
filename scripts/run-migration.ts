@@ -79,29 +79,68 @@ async function run() {
     `;
     console.log("✅ user_subscriptions created");
 
+    await sql`
+      CREATE TABLE IF NOT EXISTS "mining_upgrades" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "name" text NOT NULL UNIQUE,
+        "description" text,
+        "price_usdt" numeric(20, 2) NOT NULL,
+        "mining_rate" numeric(28, 8) NOT NULL,
+        "duration_days" numeric DEFAULT '30',
+        "is_active" boolean DEFAULT true,
+        "created_at" timestamp with time zone DEFAULT now()
+      )
+    `;
+    console.log("✅ mining_upgrades created");
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS "user_mining_upgrades" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "user_id" uuid NOT NULL,
+        "upgrade_id" uuid NOT NULL,
+        "tx_hash" text NOT NULL,
+        "status" text DEFAULT 'pending',
+        "started_at" timestamp with time zone,
+        "expires_at" timestamp with time zone,
+        "created_at" timestamp with time zone DEFAULT now(),
+        "updated_at" timestamp with time zone DEFAULT now()
+      )
+    `;
+    console.log("✅ user_mining_upgrades created");
+
+    await sql`ALTER TABLE "tasks" ADD COLUMN IF NOT EXISTS "type" text DEFAULT 'social'`;
+    await sql`ALTER TABLE "tasks" ADD COLUMN IF NOT EXISTS "puzzle_data" text`;
+    await sql`ALTER TABLE "tasks" ADD COLUMN IF NOT EXISTS "correct_answer" text`;
+    try {
+      await sql`ALTER TABLE "tasks" ADD CONSTRAINT "tasks_title_unique" UNIQUE("title")`;
+    } catch { /* exists */ }
+    console.log("✅ tasks columns updated");
+
     await sql`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "is_admin" boolean DEFAULT false`;
     console.log("✅ users.is_admin column added");
 
-    // Add FKs if not already present (ignore errors)
+    // Add FKs
     try {
       await sql`ALTER TABLE "mining_stats" ADD CONSTRAINT "mining_stats_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE cascade`;
-    } catch { /* already exists */ }
-
+    } catch { /* exists */ }
     try {
       await sql`ALTER TABLE "user_tasks" ADD CONSTRAINT "user_tasks_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE cascade`;
-    } catch { /* already exists */ }
-
+    } catch { /* exists */ }
     try {
       await sql`ALTER TABLE "user_tasks" ADD CONSTRAINT "user_tasks_task_id_tasks_id_fk" FOREIGN KEY ("task_id") REFERENCES "tasks"("id") ON DELETE cascade`;
-    } catch { /* already exists */ }
-
+    } catch { /* exists */ }
     try {
       await sql`ALTER TABLE "user_subscriptions" ADD CONSTRAINT "user_subscriptions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE cascade`;
-    } catch { /* already exists */ }
-
+    } catch { /* exists */ }
     try {
       await sql`ALTER TABLE "user_subscriptions" ADD CONSTRAINT "user_subscriptions_plan_id_subscription_plans_id_fk" FOREIGN KEY ("plan_id") REFERENCES "subscription_plans"("id")`;
-    } catch { /* already exists */ }
+    } catch { /* exists */ }
+    try {
+      await sql`ALTER TABLE "user_mining_upgrades" ADD CONSTRAINT "user_mining_upgrades_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE cascade`;
+    } catch { /* exists */ }
+    try {
+      await sql`ALTER TABLE "user_mining_upgrades" ADD CONSTRAINT "user_mining_upgrades_upgrade_id_mining_upgrades_id_fk" FOREIGN KEY ("upgrade_id") REFERENCES "mining_upgrades"("id")`;
+    } catch { /* exists */ }
 
     console.log("\n✅ All migrations applied successfully!");
 

@@ -16,17 +16,47 @@ export const miningStats = pgTable("mining_stats", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }).unique(),
   balance: numeric("balance", { precision: 28, scale: 8 }).default("0"),
-  miningRate: numeric("mining_rate", { precision: 28, scale: 8 }).default("0.5"), // tokens per hour
+  miningRate: numeric("mining_rate", { precision: 28, scale: 8 }).default("0.5"), // base tokens per hour
   lastClaimedAt: timestamp("last_claimed_at", { withTimezone: true }).defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+export const miningUpgrades = pgTable("mining_upgrades", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull().unique(), // e.g. "Starter Boost", "Turbo Boost"
+  description: text("description"),
+  priceUsdt: numeric("price_usdt", { precision: 20, scale: 2 }).notNull(),
+  miningRate: numeric("mining_rate", { precision: 28, scale: 8 }).notNull(), // New rate after upgrade
+  durationDays: numeric("duration_days").default("30"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const userMiningUpgrades = pgTable("user_mining_upgrades", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  upgradeId: uuid("upgrade_id")
+    .notNull()
+    .references(() => miningUpgrades.id),
+  txHash: text("tx_hash").notNull(),
+  status: text("status").default("pending"), // pending | active | expired
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
 export const tasks = pgTable("tasks", {
   id: uuid("id").primaryKey().defaultRandom(),
-  title: text("title").notNull(),
+  title: text("title").notNull().unique(),
   description: text("description"),
+  type: text("type").default("social"), // social | video | puzzle
   rewardAmount: numeric("reward_amount", { precision: 28, scale: 8 }).notNull(),
+  puzzleData: text("puzzle_data"), // JSON string for { question, options: [] }
+  correctAnswer: text("correct_answer"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
@@ -52,4 +82,16 @@ export const miningRelations = relations(users, ({ one, many }) => ({
     references: [miningStats.userId],
   }),
   userTasks: many(userTasks),
+  userMiningUpgrades: many(userMiningUpgrades),
+}));
+
+export const userMiningUpgradeRelations = relations(userMiningUpgrades, ({ one }) => ({
+  user: one(users, {
+    fields: [userMiningUpgrades.userId],
+    references: [users.id],
+  }),
+  upgrade: one(miningUpgrades, {
+    fields: [userMiningUpgrades.upgradeId],
+    references: [miningUpgrades.id],
+  }),
 }));

@@ -31,10 +31,14 @@ export async function GET(req: NextRequest) {
 
     const completedTaskIds = new Set(completedTasks.map((ut) => ut.taskId));
 
-    const tasksWithStatus = allTasks.map((task) => ({
-      ...task,
-      completed: completedTaskIds.has(task.id),
-    }));
+    const tasksWithStatus = allTasks.map((task) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { correctAnswer, ...safeTask } = task;
+      return {
+        ...safeTask,
+        completed: completedTaskIds.has(task.id),
+      };
+    });
 
     return ok({ tasks: tasksWithStatus });
   } catch (error) {

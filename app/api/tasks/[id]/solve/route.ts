@@ -34,6 +34,7 @@ export async function POST(
   try {
     const userId = getUserId(req);
     const { id: taskId } = await params;
+    const { answer } = await req.json().catch(() => ({}));
 
     const task = await db.query.tasks.findFirst({
       where: (t, { eq, and }) => and(eq(t.id, taskId), eq(t.isActive, true)),
@@ -41,6 +42,13 @@ export async function POST(
 
     if (!task) {
       return err("Task not found or no longer active", 404);
+    }
+
+    // Verify answer if task has one
+    if (task.correctAnswer) {
+      if (!answer || answer.trim().toLowerCase() !== task.correctAnswer.trim().toLowerCase()) {
+        return err("Incorrect answer. Please try again.", 400);
+      }
     }
 
     const alreadyDone = await db.query.userTasks.findFirst({

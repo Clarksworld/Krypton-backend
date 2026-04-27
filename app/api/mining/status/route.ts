@@ -33,17 +33,23 @@ export async function GET(req: NextRequest) {
 
     // Calculate accrued since last claim
     const now = new Date();
-    const msSinceLast = now.getTime() - new Date(stats.lastClaimedAt || stats.createdAt!).getTime();
+    const lastClaimed = new Date(stats.lastClaimedAt || stats.createdAt!);
+    const msSinceLast = now.getTime() - lastClaimed.getTime();
     
     const hoursSinceLast = msSinceLast / (1000 * 60 * 60);
     const pendingAccrual = hoursSinceLast * parseFloat(stats.miningRate || "0");
+
+    const nextClaimAt = new Date(lastClaimed.getTime() + 24 * 60 * 60 * 1000);
+    const canClaim = now >= nextClaimAt;
     
     return ok({ 
       miningStats: {
         balance: stats.balance,
         miningRate: stats.miningRate,
         pendingAccrual: pendingAccrual.toFixed(6),
-        lastClaimedAt: stats.lastClaimedAt
+        lastClaimedAt: stats.lastClaimedAt,
+        nextClaimAt,
+        canClaim,
       } 
     });
   } catch (error) {

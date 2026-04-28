@@ -103,6 +103,7 @@ export async function POST(req: NextRequest) {
     const token = await signToken({
       sub: newUser.id,
       email: newUser.email,
+      role: "user",
     });
 
     const response = ok({

@@ -63,7 +63,8 @@ export async function POST(req: NextRequest) {
     const token = await signToken({
       sub: user.id,
       email: user.email,
-    });
+      role: user.isAdmin ? "admin" : "user",
+    } as any);
 
     // Set cookie and return user info + token
     const response = ok({

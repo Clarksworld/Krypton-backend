@@ -7,6 +7,7 @@ const EXPIRY = "7d";
 export interface JwtPayload {
   sub: string;  // user id
   email: string;
+  role?: string;
 }
 
 export async function signToken(payload: JwtPayload): Promise<string> {
@@ -22,6 +23,8 @@ export async function verifyToken(token: string): Promise<JwtPayload> {
   return payload as unknown as JwtPayload;
 }
 
+import { ApiError } from "./errors";
+
 /**
  * Extracts the user ID from the request headers (set by middleware)
  */
@@ -29,7 +32,7 @@ export function getUserId(req: Request | Headers): string {
   const headers = req instanceof Headers ? req : req.headers;
   const userId = headers.get("x-user-id");
   if (!userId) {
-    throw new Error("User ID not found in headers. Is the route protected?");
+    throw new ApiError("User ID not found in headers. Is the route protected?", 401);
   }
   return userId;
 }
@@ -43,12 +46,10 @@ export function getAdminId(req: Request | Headers): string {
   const userId = headers.get("x-user-id");
   const role = headers.get("x-user-role");
   if (!userId) {
-    throw new Error("User ID not found in headers. Is the route protected?");
+    throw new ApiError("User ID not found in headers. Is the route protected?", 401);
   }
   if (role !== "admin") {
-    const err = new Error("Admin access required");
-    (err as any).statusCode = 403;
-    throw err;
+    throw new ApiError("Admin access required", 403);
   }
   return userId;
 }

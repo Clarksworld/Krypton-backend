@@ -111,10 +111,13 @@ async function run() {
     await sql`ALTER TABLE "tasks" ADD COLUMN IF NOT EXISTS "type" text DEFAULT 'social'`;
     await sql`ALTER TABLE "tasks" ADD COLUMN IF NOT EXISTS "puzzle_data" text`;
     await sql`ALTER TABLE "tasks" ADD COLUMN IF NOT EXISTS "correct_answer" text`;
+    await sql`ALTER TABLE "tasks" ADD COLUMN IF NOT EXISTS "task_link" text`;
+    await sql`ALTER TABLE "tasks" ADD COLUMN IF NOT EXISTS "completion_code" text`;
+    await sql`ALTER TABLE "tasks" ADD COLUMN IF NOT EXISTS "updated_at" timestamp with time zone DEFAULT now()`;
     try {
       await sql`ALTER TABLE "tasks" ADD CONSTRAINT "tasks_title_unique" UNIQUE("title")`;
     } catch { /* exists */ }
-    console.log("✅ tasks columns updated");
+    console.log("✅ tasks columns updated (task_link, completion_code, updated_at added)");
 
     await sql`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "is_admin" boolean DEFAULT false`;
     console.log("✅ users.is_admin column added");

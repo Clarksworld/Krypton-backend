@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 
     const tasksWithStatus = allTasks.map((task) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { correctAnswer, ...safeTask } = task;
+      const { correctAnswer, completionCode, ...safeTask } = task;
       return {
         ...safeTask,
         completed: completedTaskIds.has(task.id),

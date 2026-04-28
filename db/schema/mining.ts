@@ -55,10 +55,13 @@ export const tasks = pgTable("tasks", {
   description: text("description"),
   type: text("type").default("social"), // social | video | puzzle
   rewardAmount: numeric("reward_amount", { precision: 28, scale: 8 }).notNull(),
-  puzzleData: text("puzzle_data"), // JSON string for { question, options: [] }
-  correctAnswer: text("correct_answer"),
+  taskLink: text("task_link"),           // URL for social/video tasks
+  completionCode: text("completion_code"), // Secret code for video task verification
+  puzzleData: text("puzzle_data"),       // JSON string for { question, options: [] }
+  correctAnswer: text("correct_answer"), // For puzzle tasks
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
 export const userTasks = pgTable(

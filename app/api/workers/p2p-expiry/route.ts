@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/db";
 import { p2pTrades, wallets, transactions } from "@/db/schema";
 import { eq, and, sql, lt } from "drizzle-orm";
-import { ok, handleError } from "@/lib/errors";
+import { ok, err, handleError } from "@/lib/errors";
 
 /**
  * @swagger

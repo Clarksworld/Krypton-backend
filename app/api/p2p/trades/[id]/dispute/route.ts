@@ -4,6 +4,7 @@ import { getUserId } from "@/lib/auth";
 import { ok, err, handleError } from "@/lib/errors";
 import { p2pTrades, p2pDisputes } from "@/db/schema";
 import { eq, or, and } from "drizzle-orm";
+import { triggerTradeUpdate } from "@/lib/pusher";
 import { z } from "zod";
 import { validate } from "@/lib/validate";
 
@@ -80,6 +81,11 @@ export async function POST(
       }).where(eq(p2pTrades.id, tradeId));
 
       return [newDispute];
+    });
+
+    await triggerTradeUpdate(tradeId, "status-updated", {
+      status: "disputed",
+      tradeId
     });
 
     return ok({ dispute, message: "Dispute raised. Admin will review soon." });

@@ -15,9 +15,16 @@ import { ok, handleError } from "@/lib/errors";
  *       200:
  *         description: Success
  */
+import { triggerTradeUpdate } from "@/lib/pusher";
+import { unlockEscrow } from "@/lib/p2p-escrow";
+
 export async function GET(req: NextRequest) {
   try {
-    // In production, this would be protected by a secret header (like WEBHOOK_SECRET)
+    const authHeader = req.headers.get("Authorization");
+    if (process.env.NODE_ENV === "production" && authHeader !== `Bearer ${process.env.WORKER_SECRET}`) {
+      return err("Unauthorized", 401);
+    }
+
     const now = new Date();
 
     const expiredTrades = await db.query.p2pTrades.findMany({
@@ -33,35 +40,24 @@ export async function GET(req: NextRequest) {
 
     for (const trade of expiredTrades) {
       try {
-        await db.transaction(async (tx) => {
-          // Determine seller
-          const sellerId = trade.offer.type === "sell" ? trade.makerId : trade.takerId;
+        const sellerId = trade.offer.type === "sell" ? trade.makerId : trade.takerId;
 
-          // 1. Release Escrow: Move from seller's frozenBalance back to balance
-          await tx
-            .update(wallets)
-            .set({
-              balance: sql`${wallets.balance} + ${trade.cryptoAmount}`,
-              frozenBalance: sql`${wallets.frozenBalance} - ${trade.cryptoAmount}`,
-              updatedAt: new Date(),
-            })
-            .where(and(eq(wallets.userId, sellerId), eq(wallets.assetId, trade.assetId)));
+        // 1. Release Escrow back to seller if locked
+        if (trade.escrowLocked) {
+          await unlockEscrow(trade.id, sellerId, trade.assetId, trade.cryptoAmount);
+        }
 
-          // 2. Update status
-          await tx
-            .update(p2pTrades)
-            .set({
-              status: "cancelled",
-              updatedAt: new Date(),
-            })
-            .where(eq(p2pTrades.id, trade.id));
+        // 2. Update status to cancelled
+        await db.update(p2pTrades)
+          .set({ status: "cancelled", updatedAt: new Date() })
+          .where(eq(p2pTrades.id, trade.id));
 
-          // 3. Update transactions
-          await tx
-            .update(transactions)
-            .set({ status: "failed" })
-            .where(eq(transactions.reference, `TRADE-${trade.id.split("-")[0].toUpperCase()}`));
+        // 3. Trigger Pusher notification
+        await triggerTradeUpdate(trade.id, "status-updated", {
+          status: "cancelled",
+          reason: "expired"
         });
+
         processedCount++;
       } catch (err) {
         console.error(`Failed to expire trade ${trade.id}:`, err);

@@ -4,6 +4,7 @@ import { getUserId } from "@/lib/auth";
 import { ok, err, handleError } from "@/lib/errors";
 import { p2pTrades, wallets, transactions } from "@/db/schema";
 import { eq, and, sql, or } from "drizzle-orm";
+import { triggerTradeUpdate } from "@/lib/pusher";
 
 /**
  * @swagger
@@ -73,6 +74,11 @@ export async function POST(
         .update(transactions)
         .set({ status: "failed" })
         .where(eq(transactions.reference, `TRADE-${tradeId.split("-")[0].toUpperCase()}`));
+    });
+
+    await triggerTradeUpdate(tradeId, "status-updated", {
+      status: "cancelled",
+      tradeId
     });
 
     return ok({ message: "Trade cancelled. Escrowed funds returned to seller." });

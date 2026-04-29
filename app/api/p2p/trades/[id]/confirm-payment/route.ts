@@ -4,6 +4,7 @@ import { getUserId } from "@/lib/auth";
 import { ok, err, handleError } from "@/lib/errors";
 import { p2pTrades, p2pOffers, transactions } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
+import { triggerTradeUpdate } from "@/lib/pusher";
 
 /**
  * @swagger
@@ -72,6 +73,11 @@ export async function POST(
       .update(transactions)
       .set({ status: "processing" })
       .where(eq(transactions.reference, `TRADE-${tradeId.split("-")[0].toUpperCase()}`));
+
+    await triggerTradeUpdate(tradeId, "status-updated", {
+      status: "payment_sent",
+      trade: updated
+    });
 
     return ok({ trade: updated, message: "Payment confirmed as sent. Waiting for seller to release crypto." });
   } catch (error) {

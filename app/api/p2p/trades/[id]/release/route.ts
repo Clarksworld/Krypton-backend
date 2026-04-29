@@ -5,6 +5,7 @@ import { ok, err, handleError } from "@/lib/errors";
 import { p2pTrades, wallets, transactions, users } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { verifySync } from "otplib";
+import { triggerTradeUpdate } from "@/lib/pusher";
 
 /**
  * @swagger
@@ -125,6 +126,11 @@ export async function POST(
       // 5. Create a transaction record for the Maker too if they are the seller/buyer
       // (This is skipped here for simplicity as we usually show takers their order history, 
       // but in a real app both sides get a ledger entry).
+    });
+
+    await triggerTradeUpdate(tradeId, "status-updated", {
+      status: "completed",
+      tradeId
     });
 
     return ok({ message: "Crypto released successfully. Trade completed." });

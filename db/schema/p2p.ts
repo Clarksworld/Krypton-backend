@@ -67,6 +67,8 @@ export const p2pTrades = pgTable("p2p_trades", {
   // pending|payment_sent|payment_confirmed|completed|cancelled|disputed
   status: text("status").default("pending"),
   bankAccountId: uuid("bank_account_id").references(() => bankAccounts.id),
+  escrowLocked: boolean("escrow_locked").default(false),
+  escrowReleased: boolean("escrow_released").default(false),
   paymentSentAt: timestamp("payment_sent_at", { withTimezone: true }),
   paymentConfirmedAt: timestamp("payment_confirmed_at", { withTimezone: true }),
   completedAt: timestamp("completed_at", { withTimezone: true }),
@@ -92,7 +94,32 @@ export const p2pTradesRelations = relations(p2pTrades, ({ one, many }) => ({
     fields: [p2pTrades.assetId],
     references: [cryptoAssets.id],
   }),
+  messages: many(p2pMessages),
   disputes: many(p2pDisputes),
+}));
+
+export const p2pMessages = pgTable("p2p_messages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tradeId: uuid("trade_id")
+    .notNull()
+    .references(() => p2pTrades.id, { onDelete: "cascade" }),
+  senderId: uuid("sender_id")
+    .notNull()
+    .references(() => users.id),
+  content: text("content").notNull(),
+  attachmentUrl: text("attachment_url"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const p2pMessagesRelations = relations(p2pMessages, ({ one }) => ({
+  trade: one(p2pTrades, {
+    fields: [p2pMessages.tradeId],
+    references: [p2pTrades.id],
+  }),
+  sender: one(users, {
+    fields: [p2pMessages.senderId],
+    references: [users.id],
+  }),
 }));
 
 export const p2pDisputes = pgTable("p2p_disputes", {

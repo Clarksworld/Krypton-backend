@@ -67,7 +67,7 @@ export async function GET(
         messages: {
           orderBy: (m, { asc }) => [asc(m.createdAt)],
           with: {
-            sender: { columns: { id: true, name: true } }
+            sender: { columns: { id: true, username: true } }
           }
         }
       },

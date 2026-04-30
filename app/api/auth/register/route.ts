@@ -99,15 +99,7 @@ export async function POST(req: NextRequest) {
       // We don't throw here to avoid failing registration if email fails
     }
 
-    // Generate JWT for auto-login
-    const token = await signToken({
-      sub: newUser.id,
-      email: newUser.email,
-      role: "user",
-    });
-
     const response = ok({
-      token,
       message: "Account created successfully. Please check your email to verify.",
       user: {
         id: newUser.id,
@@ -115,15 +107,6 @@ export async function POST(req: NextRequest) {
         username: newUser.username,
       },
     }, 201);
-
-    // Set cookie for auto-login
-    response.cookies.set("krypton_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-      path: "/",
-    });
 
     return response;
   } catch (err) {

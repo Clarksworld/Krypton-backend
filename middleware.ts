@@ -4,6 +4,20 @@ import { verifyToken } from "./lib/auth";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const origin = request.headers.get("origin") || "*";
+
+  // Handle preflight OPTIONS requests for CORS
+  if (request.method === "OPTIONS") {
+    return new NextResponse(null, {
+      status: 200,
+      headers: {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Allow-Credentials": "true",
+      },
+    });
+  }
 
   const publicAuthRoutes = [
     "/api/auth/login",
@@ -20,35 +34,43 @@ export async function middleware(request: NextRequest) {
 
   const isPublicRoute = publicAuthRoutes.some((route) => pathname.startsWith(route));
 
+  let response = NextResponse.next();
+
   // Only protect /api routes, but exclude strictly public endpoints
   if (pathname.startsWith("/api") && !isPublicRoute) {
     const token = request.cookies.get("krypton_token")?.value;
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+      response = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    } else {
+      try {
+        const payload = await verifyToken(token);
+        // Add user ID to headers so downstream route handlers can use it
+        const requestHeaders = new Headers(request.headers);
+        requestHeaders.set("x-user-id", payload.sub);
+        if ((payload as any).role) {
+          requestHeaders.set("x-user-role", (payload as any).role);
+        }
 
-    try {
-      const payload = await verifyToken(token);
-      // Add user ID to headers so downstream route handlers can use it
-      const requestHeaders = new Headers(request.headers);
-      requestHeaders.set("x-user-id", payload.sub);
-      if ((payload as any).role) {
-        requestHeaders.set("x-user-role", (payload as any).role);
+        response = NextResponse.next({
+          request: {
+            headers: requestHeaders,
+          },
+        });
+      } catch (error) {
+        console.error("JWT verification failed:", error);
+        response = NextResponse.json({ error: "Invalid token" }, { status: 401 });
       }
-
-      return NextResponse.next({
-        request: {
-          headers: requestHeaders,
-        },
-      });
-    } catch (error) {
-      console.error("JWT verification failed:", error);
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
   }
 
-  return NextResponse.next();
+  // Add CORS headers to all responses
+  response.headers.set("Access-Control-Allow-Origin", origin);
+  response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  response.headers.set("Access-Control-Allow-Credentials", "true");
+
+  return response;
 }
 
 export const config = {

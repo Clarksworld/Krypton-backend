@@ -39,7 +39,15 @@ export async function proxy(request: NextRequest) {
 
   // Only protect /api routes, but exclude strictly public endpoints
   if (pathname.startsWith("/api") && !isPublicRoute) {
-    const token = request.cookies.get("krypton_token")?.value;
+    let token = request.cookies.get("krypton_token")?.value;
+
+    // Fallback: Check Authorization header if cookie is missing
+    if (!token) {
+      const authHeader = request.headers.get("Authorization");
+      if (authHeader?.startsWith("Bearer ")) {
+        token = authHeader.substring(7);
+      }
+    }
 
     if (!token) {
       response = NextResponse.json({ error: "Unauthorized" }, { status: 401 });

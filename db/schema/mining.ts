@@ -116,3 +116,7 @@ export const userTasksRelations = relations(userTasks, ({ one }) => ({
     references: [tasks.id],
   }),
 }));
+
+export const tasksRelations = relations(tasks, ({ many }) => ({
+  userTasks: many(userTasks),
+}));

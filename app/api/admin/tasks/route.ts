@@ -49,12 +49,20 @@ const createTaskSchema = z.object({
 export async function GET(req: NextRequest) {
   try {
     getAdminId(req);
-
+    // Fetch all tasks with their completion counts
     const allTasks = await db.query.tasks.findMany({
       orderBy: (t, { desc }) => [desc(t.createdAt)],
+      with: {
+        userTasks: true
+      }
     });
 
-    return ok({ tasks: allTasks });
+    const tasksWithCounts = allTasks.map(task => ({
+      ...task,
+      completions: (task as any).userTasks?.length || 0
+    }));
+
+    return ok({ tasks: tasksWithCounts });
   } catch (error) {
     return handleError(error);
   }

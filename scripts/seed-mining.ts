@@ -57,6 +57,28 @@ async function main() {
       }),
       correctAnswer: "21 Million",
     },
+    {
+      title: "Follow us on X (Twitter)",
+      description: "Stay updated with our latest news and earn rewards!",
+      type: "social",
+      rewardAmount: "10.0",
+      taskLink: "https://x.com/krypton_obsidian",
+    },
+    {
+      title: "Join our Telegram Group",
+      description: "Connect with the community and earn rewards!",
+      type: "social",
+      rewardAmount: "10.0",
+      taskLink: "https://t.me/krypton_obsidian",
+    },
+    {
+      title: "Watch Intro Video",
+      description: "Learn how Krypton works and get a secret code at the end!",
+      type: "video",
+      rewardAmount: "20.0",
+      taskLink: "https://youtube.com/watch?v=example",
+      completionCode: "KRYPTON_GOLD",
+    },
   ];
 
   for (const t of puzzleTasks) {

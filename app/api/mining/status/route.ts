@@ -47,6 +47,26 @@ export async function GET(req: NextRequest) {
     const nextClaimAt = new Date(lastClaimed.getTime() + countdownSeconds * 1000);
     const canClaim = now >= nextClaimAt;
     
+    // 4. Fetch available tasks and their completion status
+    const allTasks = await db.query.tasks.findMany({
+      where: (t, { eq }) => eq(t.isActive, true),
+      orderBy: (t, { desc }) => [desc(t.createdAt)],
+    });
+
+    const completedUserTasks = await db.query.userTasks.findMany({
+      where: (ut, { eq }) => eq(ut.userId, userId),
+    });
+    const completedTaskIds = new Set(completedUserTasks.map((ut) => ut.taskId));
+
+    const tasksWithStatus = allTasks.map((task) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { correctAnswer, completionCode, ...safeTask } = task;
+      return {
+        ...safeTask,
+        completed: completedTaskIds.has(task.id),
+      };
+    });
+
     return ok({ 
       miningStats: {
         balance: stats.balance,
@@ -55,7 +75,8 @@ export async function GET(req: NextRequest) {
         lastClaimedAt: stats.lastClaimedAt,
         nextClaimAt,
         canClaim,
-      } 
+      },
+      availableTasks: tasksWithStatus
     });
   } catch (error) {
     return handleError(error);

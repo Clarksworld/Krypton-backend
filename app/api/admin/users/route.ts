@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { getAdminId } from "@/lib/auth";
 import { ok, handleError } from "@/lib/errors";
 import { users, userProfiles } from "@/db/schema";
-import { ilike, or, desc } from "drizzle-orm";
+import { ilike, or, desc, count, eq, and } from "drizzle-orm";
 
 /**
  * @swagger
@@ -43,31 +43,76 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") ?? "";
+    const kycStatus = searchParams.get("kycStatus");
+    const isAdminParam = searchParams.get("isAdmin");
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
-    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") ?? "20")));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20")));
     const offset = (page - 1) * limit;
 
-    const allUsers = await db.query.users.findMany({
-      where: search
-        ? (u, { or, ilike }) =>
-            or(ilike(u.email, `%${search}%`), ilike(u.username!, `%${search}%`))
-        : undefined,
-      with: { profile: true },
-      columns: {
-        id: true,
-        email: true,
-        username: true,
-        isEmailVerified: true,
-        isTwoFactorEnabled: true,
-        isAdmin: true,
-        createdAt: true,
-      },
-      orderBy: (u, { desc }) => [desc(u.createdAt)],
-      limit,
-      offset,
-    });
+    // Build conditions
+    const conditions = [];
 
-    return ok({ users: allUsers, page, limit });
+    if (search) {
+      conditions.push(
+        or(
+          ilike(users.email, `%${search}%`),
+          ilike(users.username, `%${search}%`)
+        )
+      );
+    }
+
+    if (kycStatus) {
+      conditions.push(eq(userProfiles.kycStatus, kycStatus));
+    }
+
+    if (isAdminParam !== null) {
+      conditions.push(eq(users.isAdmin, isAdminParam === "true"));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    // Get total count
+    const [totalRow] = await db
+      .select({ total: count() })
+      .from(users)
+      .leftJoin(userProfiles, eq(users.id, userProfiles.userId))
+      .where(whereClause);
+
+    const total = Number(totalRow.total);
+
+    // Get users with profile info
+    const rows = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        username: users.username,
+        isEmailVerified: users.isEmailVerified,
+        isTwoFactorEnabled: users.isTwoFactorEnabled,
+        isAdmin: users.isAdmin,
+        createdAt: users.createdAt,
+        profile: {
+          fullName: userProfiles.fullName,
+          kycLevel: userProfiles.kycLevel,
+          kycStatus: userProfiles.kycStatus,
+          avatarUrl: userProfiles.avatarUrl,
+        },
+      })
+      .from(users)
+      .leftJoin(userProfiles, eq(users.id, userProfiles.userId))
+      .where(whereClause)
+      .orderBy(desc(users.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    return ok({
+      users: rows,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     return handleError(error);
   }

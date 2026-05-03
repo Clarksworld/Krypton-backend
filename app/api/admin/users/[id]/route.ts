@@ -29,11 +29,11 @@ import { eq, desc } from "drizzle-orm";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     getAdminId(req);
-    const userId = params.id;
+    const { id: userId } = await params;
 
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),

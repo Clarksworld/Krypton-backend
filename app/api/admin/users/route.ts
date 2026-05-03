@@ -2,8 +2,8 @@ import { NextRequest } from "next/server";
 import { db } from "@/db";
 import { getAdminId } from "@/lib/auth";
 import { ok, handleError } from "@/lib/errors";
-import { users, userProfiles } from "@/db/schema";
-import { ilike, or, desc, count, eq, and } from "drizzle-orm";
+import { users, userProfiles, userSessions } from "@/db/schema";
+import { ilike, or, desc, count, eq, and, sql } from "drizzle-orm";
 
 /**
  * @swagger
@@ -80,7 +80,17 @@ export async function GET(req: NextRequest) {
 
     const total = Number(totalRow.total);
 
-    // Get users with profile info
+    // Latest session subquery
+    const latestSessionSubquery = db
+      .select({
+        userId: userSessions.userId,
+        lastSeenAt: sql<string>`MAX(${userSessions.lastSeenAt})`.as("last_seen_at"),
+      })
+      .from(userSessions)
+      .groupBy(userSessions.userId)
+      .as("ls");
+
+    // Get users with profile info and last seen activity
     const rows = await db
       .select({
         id: users.id,
@@ -90,6 +100,7 @@ export async function GET(req: NextRequest) {
         isTwoFactorEnabled: users.isTwoFactorEnabled,
         isAdmin: users.isAdmin,
         createdAt: users.createdAt,
+        lastSeenAt: latestSessionSubquery.lastSeenAt,
         profile: {
           fullName: userProfiles.fullName,
           kycLevel: userProfiles.kycLevel,
@@ -99,6 +110,7 @@ export async function GET(req: NextRequest) {
       })
       .from(users)
       .leftJoin(userProfiles, eq(users.id, userProfiles.userId))
+      .leftJoin(latestSessionSubquery, eq(users.id, latestSessionSubquery.userId))
       .where(whereClause)
       .orderBy(desc(users.createdAt))
       .limit(limit)

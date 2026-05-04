@@ -49,6 +49,10 @@ export async function GET(
             asset: true,
           },
         },
+        sessions: {
+          orderBy: (s: any, { desc }: any) => [desc(s.createdAt)],
+          limit: 5,
+        },
       },
     });
 

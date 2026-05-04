@@ -2,8 +2,6 @@ import { NextRequest } from "next/server";
 import { db } from "@/db";
 import { getAdminId } from "@/lib/auth";
 import { ok, err, handleError } from "@/lib/errors";
-import { users } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
 
 /**
  * @swagger
@@ -36,7 +34,7 @@ export async function GET(
     const { id: userId } = await params;
 
     const user = await db.query.users.findFirst({
-      where: eq(users.id, userId),
+      where: (u, { eq }) => eq(u.id, userId),
       with: {
         profile: true,
         wallets: {
@@ -45,7 +43,7 @@ export async function GET(
           },
         },
         transactions: {
-          orderBy: (t, { desc }) => [desc(t.createdAt)],
+          orderBy: (t: any, { desc }: any) => [desc(t.createdAt)],
           limit: 10,
           with: {
             asset: true,

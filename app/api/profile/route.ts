@@ -16,6 +16,7 @@ const updateProfileSchema = z.object({
   avatarUrl: z.string().url().optional(),
   privatePortfolio: z.boolean().optional(),
   preferredCurrency: z.string().optional(),
+  address: z.string().optional(),
 });
 
 /**

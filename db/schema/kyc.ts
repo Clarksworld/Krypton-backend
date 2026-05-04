@@ -9,6 +9,7 @@ export const kycSubmissions = pgTable("kyc_submissions", {
   idType: text("id_type").notNull(), // passport | national_id | drivers_license
   idNumber: text("id_number").notNull(),
   idDocUrl: text("id_doc_url"),
+  idBackUrl: text("id_back_url"),
   selfieUrl: text("selfie_url"),
   status: text("status").default("pending"), // pending | approved | failed
   rejectReason: text("reject_reason"),

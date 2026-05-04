@@ -56,6 +56,7 @@ export const userProfiles = pgTable("user_profiles", {
   kycStatus: text("kyc_status").default("unverified"), // unverified|pending|approved|failed
   privatePortfolio: boolean("private_portfolio").default(false),
   preferredCurrency: text("preferred_currency").default("USD"),
+  address: text("address"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 

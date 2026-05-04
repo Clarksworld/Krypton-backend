@@ -11,6 +11,7 @@ const kycSchema = z.object({
   idType: z.string(),
   idNumber: z.string(),
   idDocUrl: z.string().url().optional(),
+  idBackUrl: z.string().url().optional(),
   selfieUrl: z.string().url().optional(),
 });
 
@@ -34,6 +35,7 @@ const kycSchema = z.object({
  *               idType: { type: string, example: "national_id" }
  *               idNumber: { type: string, example: "123456789" }
  *               idDocUrl: { type: string }
+ *               idBackUrl: { type: string }
  *               selfieUrl: { type: string }
  *     responses:
  *       200:

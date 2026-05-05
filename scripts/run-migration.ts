@@ -108,6 +108,21 @@ async function run() {
     `;
     console.log("✅ user_mining_upgrades created");
 
+    await sql`
+      CREATE TABLE IF NOT EXISTS "audit_logs" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "admin_id" uuid NOT NULL,
+        "action" text NOT NULL,
+        "entity_type" text NOT NULL,
+        "entity_id" text,
+        "details" jsonb,
+        "ip_address" text,
+        "created_at" timestamp with time zone DEFAULT now()
+      )
+    `;
+    console.log("✅ audit_logs created");
+
+
     await sql`ALTER TABLE "tasks" ADD COLUMN IF NOT EXISTS "type" text DEFAULT 'social'`;
     await sql`ALTER TABLE "tasks" ADD COLUMN IF NOT EXISTS "puzzle_data" text`;
     await sql`ALTER TABLE "tasks" ADD COLUMN IF NOT EXISTS "correct_answer" text`;
@@ -144,6 +159,9 @@ async function run() {
     try {
       await sql`ALTER TABLE "user_mining_upgrades" ADD CONSTRAINT "user_mining_upgrades_upgrade_id_mining_upgrades_id_fk" FOREIGN KEY ("upgrade_id") REFERENCES "mining_upgrades"("id")`;
     } catch { /* exists */ }
+    try {
+      await sql`ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_admin_id_users_id_fk" FOREIGN KEY ("admin_id") REFERENCES "users"("id") ON DELETE cascade`;
+    } catch { /* exists */ }
 
     console.log("\n✅ All migrations applied successfully!");
 
@@ -151,7 +169,7 @@ async function run() {
     const tables = await sql`
       SELECT table_name FROM information_schema.tables 
       WHERE table_schema='public' 
-      AND table_name IN ('mining_stats','tasks','user_tasks','subscription_plans','user_subscriptions')
+      AND table_name IN ('mining_stats','tasks','user_tasks','subscription_plans','user_subscriptions','audit_logs')
       ORDER BY table_name
     `;
     console.log("\nVerified tables:", tables.map((r: any) => r.table_name));

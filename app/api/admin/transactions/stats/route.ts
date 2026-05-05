@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { getAdminId } from "@/lib/auth";
 import { ok, handleError } from "@/lib/errors";
 import { count, eq, and, gte, lt, sum, sql } from "drizzle-orm";
-import { transactions } from "@/db/schema";
+import { transactions, cryptoAssets } from "@/db/schema";
 
 /**
  * @swagger
@@ -32,6 +32,8 @@ export async function GET(req: NextRequest) {
       .select({
         total: count(),
         completed: sql<number>`count(*) filter (where ${transactions.status} = 'completed')`,
+        pendingDeposits: sql<number>`count(*) filter (where ${transactions.status} = 'pending' and ${transactions.type} = 'deposit')`,
+        pendingWithdrawals: sql<number>`count(*) filter (where ${transactions.status} = 'pending' and ${transactions.type} = 'withdrawal')`,
         totalVolume: sum(transactions.fiatAmount),
         totalFee: sum(transactions.fee),
       })
@@ -67,13 +69,61 @@ export async function GET(req: NextRequest) {
     const successRate = totalCount > 0 ? (completedCount / totalCount) * 100 : 100;
     const avgFee = completedCount > 0 ? parseFloat(stats.totalFee ?? "0") / completedCount : 0;
 
+    // 3. Asset Exposure (total fiat volume per asset to estimate exposure/distribution)
+    const assetExposureRaw = await db
+      .select({
+        symbol: cryptoAssets.symbol,
+        name: cryptoAssets.name,
+        totalFiat: sum(transactions.fiatAmount)
+      })
+      .from(transactions)
+      .leftJoin(cryptoAssets, eq(transactions.assetId, cryptoAssets.id))
+      .where(eq(transactions.status, "completed"))
+      .groupBy(cryptoAssets.id);
+      
+    const totalExposureFiat = assetExposureRaw.reduce((sum, item) => sum + parseFloat(item.totalFiat ?? "0"), 0);
+    const assetExposure = assetExposureRaw.map(item => {
+      const fiat = parseFloat(item.totalFiat ?? "0");
+      const percentage = totalExposureFiat > 0 ? (fiat / totalExposureFiat) * 100 : 0;
+      return {
+        symbol: item.symbol ?? 'Unknown',
+        name: item.name ?? 'Unknown',
+        percentage: Math.round(percentage * 10) / 10
+      };
+    }).sort((a, b) => b.percentage - a.percentage);
+
+    // 4. System Performance (Transaction count over last 24 hours in 2-hour buckets)
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const recentTx = await db
+      .select({
+        createdAt: transactions.createdAt
+      })
+      .from(transactions)
+      .where(gte(transactions.createdAt, twentyFourHoursAgo));
+    
+    // Bucket them in code (12 buckets, 2 hours each)
+    const performanceBuckets = Array(12).fill(0);
+    recentTx.forEach(tx => {
+      if (tx.createdAt) {
+        const hoursAgo = (now.getTime() - tx.createdAt.getTime()) / (1000 * 60 * 60);
+        const bucketIndex = 11 - Math.floor(hoursAgo / 2);
+        if (bucketIndex >= 0 && bucketIndex < 12) {
+          performanceBuckets[bucketIndex]++;
+        }
+      }
+    });
+
     return ok({
       stats: {
         totalVolume: stats.totalVolume ?? "0",
         volumeChange: volChange,
         successRate: Math.round(successRate * 10) / 10,
         averageFee: Math.round(avgFee * 100) / 100,
-      }
+        pendingDeposits: Number(stats.pendingDeposits ?? 0),
+        pendingWithdrawals: Number(stats.pendingWithdrawals ?? 0),
+      },
+      assetExposure,
+      systemPerformance: performanceBuckets
     });
   } catch (error) {
     return handleError(error);

@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { getAdminId } from "@/lib/auth";
 import { ok, handleError } from "@/lib/errors";
 import { count, eq, and, or, ilike, gte, lte, sql, desc } from "drizzle-orm";
-import { transactions, users } from "@/db/schema";
+import { transactions, users, cryptoAssets } from "@/db/schema";
 
 /**
  * @swagger
@@ -85,9 +85,15 @@ export async function GET(req: NextRequest) {
           email: users.email,
           username: users.username,
         },
+        asset: {
+          symbol: cryptoAssets.symbol,
+          name: cryptoAssets.name,
+          iconUrl: cryptoAssets.iconUrl,
+        }
       })
       .from(transactions)
       .leftJoin(users, eq(transactions.userId, users.id))
+      .leftJoin(cryptoAssets, eq(transactions.assetId, cryptoAssets.id))
       .where(and(
         status ? eq(transactions.status, status) : undefined,
         type ? eq(transactions.type, type) : undefined,
@@ -128,6 +134,7 @@ export async function GET(req: NextRequest) {
     const formattedTransactions = rows.map(r => ({
       ...r.transaction,
       user: r.user,
+      asset: r.asset,
     }));
 
     return ok({ 

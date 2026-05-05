@@ -12,6 +12,10 @@ const updateSettingSchema = z.object({
   value: z.string(),
 });
 
+const bulkUpdateSchema = z.object({
+  updates: z.array(updateSettingSchema),
+});
+
 /**
  * @swagger
  * /api/admin/settings:
@@ -40,8 +44,8 @@ export async function GET(req: NextRequest) {
  * @swagger
  * /api/admin/settings:
  *   patch:
- *     summary: Admin — Update Platform Setting
- *     description: Modify a system configuration value.
+ *     summary: Admin — Update Platform Setting(s)
+ *     description: Modify a system configuration value or multiple values in bulk.
  *     tags: [Admin]
  *     security:
  *       - BearerAuth: []
@@ -51,18 +55,43 @@ export async function GET(req: NextRequest) {
  *         application/json:
  *           schema:
  *             type: object
- *             required: [key, value]
  *             properties:
  *               key: { type: string, example: "withdrawal_fee_pct" }
  *               value: { type: string, example: "0.5" }
+ *               updates: 
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     key: { type: string }
+ *                     value: { type: string }
  *     responses:
  *       200:
- *         description: Setting updated successfully
+ *         description: Settings updated successfully
  */
 export async function PATCH(req: NextRequest) {
   try {
     getAdminId(req);
     const body = await req.json();
+
+    if (body.updates && Array.isArray(body.updates)) {
+      const { updates } = validate(bulkUpdateSchema, body);
+      
+      const updatedList = [];
+      for (const {key, value} of updates) {
+         const [updated] = await db
+          .insert(globalSettings)
+          .values({ key, value })
+          .onConflictDoUpdate({
+            target: globalSettings.key,
+            set: { value, updatedAt: new Date() },
+          })
+          .returning();
+          updatedList.push(updated);
+      }
+      return ok({ settings: updatedList, message: `${updates.length} settings updated.` });
+    }
+
     const { key, value } = validate(updateSettingSchema, body);
 
     const [updated] = await db
